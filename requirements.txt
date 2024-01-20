@@ -1,7 +1,2 @@
 torch
 torchvision
-apscheduler
-speedtest
-xlrd
-xlwt
-xlutils
