@@ -1,7 +1,23 @@
 torch
 torchvision
-apscheduler
-speedtest
-xlrd
-xlwt
-xlutils
+click>=7.1.2
+coloredlogs>=10.0
+# grpcio must use version 1.26.0 on Raspberry Pi
+# Higher than this version will report ImportError: /lib/arm-linux-gnueabihf/libc.so.6: version `GLIBC_2.33' not found
+# grpcio==1.26.0
+# grpcio-tools==1.26.0
+grpcio>=1.26.0
+grpcio-tools>=1.26.0
+humanfriendly>=8.0
+numpy>=1.19.2
+opencv_python>=4.5.3.56
+protobuf
+PyYAML>=5.3
+# Because the Predictor trained by sklearn needs to be transferred between Master and Trainer, the same version must be used.
+scikit_learn
+scipy>=1.1.0
+# matplotlib==3.3.2  # Only used when debugging
+tqdm>=4.50.2
+# The Raspberry Pi will fail when installing the following two. You need to download the wheel and install it manually.
+# torch==1.7.0
+# torchvision==0.8.0
