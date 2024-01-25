@@ -1,0 +1,57 @@
+# Configuration file path of logging
+log_cfg: logging.yml
+
+# Local ports listened by each service
+port:
+  master: 11110
+  trainer: 22220
+  worker: [33330, 33331]
+# Network address when accessing. m, t, w0 correspond to master, trainer, worker0 respectively.
+net:
+#  m->t: 'localhost:22220'
+#  m->w0: 'localhost:33330'
+#  m->w1: 'localhost:33331'
+#  w0->w1: 'localhost:33331'
+  # m->t: '192.168.0.100:22220'
+  # m->w0: '192.168.0.112:33330'
+  # m->w1: '192.168.0.121:33331'
+  # w0->w1: '192.168.0.121:33331'
+  m->t: '192.168.0.204:22220'
+  m->w0: '192.168.0.27:33330'
+  m->w1: '192.168.0.204:33331'
+  w0->w1: '192.168.0.204:33331'
+
+# DNN load function, use this to choose dnn
+# dnn_loader: !!python/name:dnn_models.chain.prepare_alexnet
+# dnn_loader: !!python/name:dnn_models.resnet.prepare_resnet50
+dnn_loader: !!python/name:dnn_models.chain.prepare_vgg16
+# Path of the input video file
+video_path: media/parking.mp4
+# Adjust the input frame to [nrow, ncol], which is a tuple of two int. None indicates don't resize.
+frame_size: !!python/tuple [480, 720]
+# "itg" or "dif". This option generates two corresponding options: executor_type and job_type
+mode: dif
+# Whether check the correctness of result
+check: !!bool false
+
+# Configuration of master
+master:
+  ifr_num: 10  # Total frame to be processed
+  pd_num: 0  # How many frames are pending at the same time, 0 means unlimited
+  itv_time: 0  # How long to wait after issuing an IFR, for debugging only. Normally it should be 0
+  # len(bandwidth) must be equal to len(worker).
+  # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
+  bandwidth: [3, 3]
+  scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
+  LBScheduler:
+  MyScheduler:
+    gp_size: 3  # The number of frames a group contains. A group of frames will use the same scheduling policy
+  OSCScheduler:
+    side: edge  # edge/cloud
+  NSCScheduler:
+# Configuration of worker
+worker:
+  prof_niter: 5
+# Configuration of trainer
+trainer:
+  frame_num: 400

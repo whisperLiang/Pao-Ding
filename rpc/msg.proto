@@ -1,0 +1,63 @@
+syntax = "proto2";
+package msg;
+
+message Arr2dMsg {
+  required bool sparse = 1;  // 是否为稀疏压缩
+  required bytes data = 2;  // pickle后的数据：稀疏时为List[csr_matrix]，否则为Tensor.numpy()
+}
+
+message Arr3dMsg {
+  repeated Arr2dMsg arr2ds = 1; // 保存各通道的数据
+}
+
+message JobMsg {
+  repeated int32 exec_ids = 1;
+  repeated int32 out_ids = 2;
+  map<int32, Arr3dMsg> id2data = 3;  // bytes为pickle后的List[csr_matrix]，csr_matrix是2维的
+}
+
+message WkJobMsg {
+  required int32 worker_id = 1;
+  required JobMsg job_msg = 2;
+}
+
+message IFRMsg {
+  required int32 id = 1;  // IFR的id，即帧号
+  repeated WkJobMsg wk_jobs = 2;
+}
+
+message StageMsg {
+  required int32 ifr_id = 1;
+  required int32 worker_id = 2;
+  required int32 sub_stage = 3;
+}
+
+message Rsp {
+}
+
+message Req {
+}
+
+message LayerCostMsg {
+  required bytes costs = 1;
+}
+
+message FinishMsg {
+  required int32 ifr_id = 1;
+  optional Arr3dMsg arr3d = 2;
+}
+
+service Worker {
+  rpc new_ifr(IFRMsg) returns (Rsp);
+  rpc layer_cost(Req) returns (LayerCostMsg);
+  rpc report_finish_rev(Req) returns (stream FinishMsg);
+  rpc finish_stage_rev(Req) returns (stream StageMsg);
+}
+
+message NZPredMsg {
+  required bytes nzpred = 1;  // 用pickle进行序列化
+}
+
+service Trainer {
+  rpc get_nzpred(Req) returns (NZPredMsg);
+}

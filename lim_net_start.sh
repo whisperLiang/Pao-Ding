@@ -1,0 +1,1 @@
+sudo -E PATH="$PATH" PYTHONPATH=$(python -c "import sys; print(':'.join(sys.path))") cgexec -g net_cls:mylim /usr/bin/python3 main.py "$@"
