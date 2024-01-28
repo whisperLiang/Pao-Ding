@@ -5,7 +5,7 @@ from torch import Tensor
 from core.itg_executor import ItgExecutor, ItgJob, Job, Executor, ExNode
 from core.util import msg2tensor, tensor2msg
 from rpc.msg_pb2 import JobMsg
-from core.raw_dnn import RawDNN
+from core.dag_dnn import DagDNN
 
 
 class InCache:
@@ -91,9 +91,9 @@ class DifExecutor(Executor, Generic[T]):
     """内部缓存上次的执行结果，输入DifJob，得到输出
     DifJob必须为 这次数据-上次数据"""
 
-    def __init__(self, raw_dnn: RawDNN, node_type: Type[T] = ExNode):
-        super().__init__(raw_dnn, node_type)
-        self.__itg_extor = ItgExecutor(raw_dnn, node_type)
+    def __init__(self, dag_dnn: DagDNN, node_type: Type[T] = ExNode):
+        super().__init__(dag_dnn, node_type)
+        self.__itg_extor = ItgExecutor(dag_dnn, node_type)
         self.__in_cache = InCache()  # DifJob中上一帧输入的缓存，获得输入时更新
         self.__out_cache = OutCache()  # DifJob中上一帧输出的缓存，获得输出时更新
 

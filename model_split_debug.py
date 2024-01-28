@@ -218,7 +218,7 @@ class DependencyGraph(object):
         visited = {}
         gradfn2inshape = defaultdict(deque)
         gradfn2outshape = defaultdict(deque)
-        # self.module2result = {}
+        self.module2result = {}
         self._2d_4d = True # only for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
             if module not in visited:
@@ -235,8 +235,8 @@ class DependencyGraph(object):
                 outputs = outputs.data
             if isinstance(outputs, torchvision.models.detection.image_list.ImageList):
                 outputs = outputs.tensors
-            # if isinstance(outputs, torch.Tensor):
-            #     self.module2result[module] = outputs.clone().detach()
+            if isinstance(outputs, torch.Tensor):
+                self.module2result[module] = outputs.clone().detach()
 
             if len(module._modules) == 0:
                 # gradfn2module[outputs.grad_fn] = module

@@ -8,7 +8,7 @@
             "name": "Debug Worker0",
             "type": "python",
             "request": "launch",
-            "program": "D:/ProgramCode/ResMap-latest_version/main.py",
+            "program": "D:/ProgramCode/Cross-Cloud-Ladder/main.py",
             "args": ["worker", "--config", "config.yml", "--id", "0"],
             "console": "integratedTerminal",
             "justMyCode": true

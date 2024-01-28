@@ -9,31 +9,32 @@ from torch import Tensor
 import tqdm
 
 from core.dif_executor import DifExecutor
-from core.executor import Node, Executor
+from core.executor import Executor
+from model_split import Node
 from core.ifr import IFR
 from core.itg_executor import ItgExecutor, ExNode, ItgJob
 from core.util import cached_func, ActTimer
-from core.raw_dnn import RawDNN
+from core.dag_dnn import DagDNN
 from rpc.stub_factory import WStubFactory
 
 
 class Worker(Thread):
     """以pipeline的方式执行Job"""
-    def __init__(self, id_: int, raw_dnn: RawDNN, frame_size: Tuple[int, int], check: bool,
+    def __init__(self, id_: int, dag_dnn: DagDNN, frame_size: Tuple[int, int], check: bool,
                  executor_type: Type[Executor], stb_fct: WStubFactory, config: Dict[str, Any]) -> None:
         super().__init__(daemon=True)
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__id = id_
         self.__check = check
         self.__cv = Condition()
-        self.__executor: Executor = executor_type(raw_dnn)
+        self.__executor: Executor = executor_type(dag_dnn)
         self.__ex_queue: Queue[IFR] = Queue()  # 执行的任务队列
         self.__stb_fct = stb_fct
         self.__logger.info(f"Worker{self.__id} profiling...")
         self.__costs = []
         # TODO: 缓存文件名包括hostname
-        costs = cached_func(f"w{id_}.{raw_dnn.dnn_cfg.name}.{frame_size[0]}x{frame_size[1]}.cst", self.profile_dnn_cost,
-                            raw_dnn, frame_size, config['prof_niter'], logger=self.__logger)
+        costs = cached_func(f"w{id_}.{dag_dnn.model_name}.{frame_size[0]}x{frame_size[1]}.cst", self.profile_dnn_cost,
+                            dag_dnn, frame_size, config['prof_niter'], logger=self.__logger)
         self.__logger.info(f"layer_costs={costs}")
         with self.__cv:
             self.__costs = costs
@@ -104,15 +105,15 @@ class Worker(Thread):
             self.cost = time.time() - begin
 
     @classmethod
-    def profile_dnn_cost(cls, raw_dnn: RawDNN, frame_size: Tuple[int, int], niter: int) -> List[float]:
-        itg_extor = ItgExecutor(raw_dnn, cls._TimingExNode)
-        ipt = torch.rand(1, 3, *frame_size)
-        job = ItgJob(list(range(1, len(raw_dnn.layers))), [raw_dnn.layers[-1].id_], {0: ipt})
-        layer_cost = [0 for _ in range(len(raw_dnn.layers))]
+    def profile_dnn_cost(cls, dag_dnn: DagDNN, frame_size: Tuple[int, int], niter: int) -> List[float]:
+        itg_extor = ItgExecutor(dag_dnn, cls._TimingExNode) # 用于计时的Executor
+        ipt = torch.rand(1, 3, *frame_size) # 生成随机输入
+        job = ItgJob(list(range(len(dag_dnn.layers))), [len(dag_dnn.layers)-1], dag_dnn.node2index, {0: ipt}) # 生成工作序列
+        layer_cost = [0 for _ in range(len(dag_dnn.layers))]
         for _ in tqdm.tqdm(range(niter)):
             itg_extor.exec(job)
-            for pnode in itg_extor.dag():
-                layer_cost[pnode.id] += pnode.cost
-        for l in range(len(raw_dnn.layers)):
+            for index, pnode in enumerate(itg_extor.dag()):
+                layer_cost[index] += pnode.cost
+        for l in range(len(dag_dnn.layers)):
             layer_cost[l] /= niter
         return layer_cost
