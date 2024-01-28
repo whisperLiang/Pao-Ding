@@ -5,7 +5,6 @@ from typing import List, Dict, Type, TypeVar, Generic
 from torch import Tensor
 from torch.nn import Module
 
-from core.dnn_config import InputModule, RawLayer
 from core.dag_dnn import DagDNN
 from rpc.msg_pb2 import JobMsg
 from model_split import Node
