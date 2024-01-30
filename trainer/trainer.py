@@ -29,11 +29,11 @@ class Trainer(Thread):
         self.__o_lcnz = []
 
     def run(self) -> None:
-        cnn_name = self.__dag_dnn.dnn_cfg.name
+        dnn_name = self.__dag_dnn.model_name
         vid_name = os.path.basename(self.__video_path).split('.')[0]  # 只保留文件名，去掉拓展名
         frm_size = f"{self.__frame_size[0]}x{self.__frame_size[1]}"
         trn_numb = str(self.__frame_num)
-        data_name = cnn_name + '.' + vid_name + '.' + frm_size + '.' + trn_numb
+        data_name = dnn_name + '.' + vid_name + '.' + frm_size + '.' + trn_numb
         self.__logger.info("collecting O_LFCNZ data...")
         o_lfcnz = cached_func(data_name + '.o_lfcnz', self.collect_olfcnz, self.__dag_dnn, self.__video_path,
                             self.__frame_num, self.__frame_size, logger=self.__logger)
@@ -100,14 +100,21 @@ class Trainer(Thread):
         return lfcnz
 
     @classmethod
-    def train_predictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> List[Predictor]:
-        predictors = []
+    def train_predictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
+        predictors = {}
         for l in tqdm.tqdm(range(len(dag_dnn.layers))):
             layer = dag_dnn.layers[l]
-            predictor = dag_dnn.dnn_cfg.mdl2pred[layer.module.__class__](layer.module)
-            afcnz = [lfcnz[al.id_] for al in layer.ac_layers]
-            predictor.fit(afcnz, lfcnz[layer.id_])
-            predictors.append(predictor)
+            layer_type = layer.module.__class__
+            if layer_type in dag_dnn.mdl2pred:
+                predictor = dag_dnn.mdl2pred[layer_type](layer.module)
+                afcnz = []
+                for inodelist in layer.inputs:
+                    for node in inodelist:
+                        if node in dag_dnn.node2index:
+                            afcnz.append(lfcnz[dag_dnn.node2index[node]])
+
+                predictor.fit(afcnz, lfcnz[l])
+                predictors[l] = predictor
         return predictors
 
     @classmethod

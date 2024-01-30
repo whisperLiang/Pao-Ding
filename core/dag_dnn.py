@@ -2,16 +2,16 @@ import logging
 import sys
 
 import torch
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Type
 
 from torch import Tensor
-
-from core.dnn_config import RawLayer
+from torch.nn import Module
 from core.echarts_util import gen_html
 from model_split import DependencyGraph, Node
 from collections import deque
 from torchvision.models.detection.image_list import ImageList
 from networkx import DiGraph
+from core.predictor import Predictor, MLPPredictor, LNRPredictor, DRPredictor
 
 class DagDNN:
     def __init__(self, dpg: DependencyGraph):
@@ -20,11 +20,15 @@ class DagDNN:
         self.node2index, self.layers = self._make_layerstopo(dpg, dpg.example_inputs, ignored_blocks=[], logger=self.logger)
         # ToDo: 生成DAG可视化图
         # self.__visualize_dag(self.layers, f"{self.model_name}_strucure.html")
+        self.mdl2pred: Dict[Type[Module], Type[Predictor]] \
+        = {torch.nn.ReLU: LNRPredictor,
+           torch.nn.BatchNorm2d: LNRPredictor,
+           torch.nn.MaxPool2d: LNRPredictor}
         self.logger.info(f"The DAG of DNN has {len(self.layers)} layers, "
                          f"visualized in {self.model_name}_strucure.html")
 
     def execute(self, ipt: Any) -> List[Tensor]:
-        return self.__execute_dag(self.layers[0], ipt, [None for _ in self.layers])
+        return self.__execute_dag(self.layers, ipt, [None for _ in self.layers], self.node2index)
     
     @classmethod
     def _make_layerstopo(cls, dpg: DependencyGraph, x: Tensor, ignored_blocks=[], logger: logging.Logger = None) -> (Dict[Node, int], List[Node]):
@@ -186,25 +190,23 @@ class DagDNN:
 
 
     @classmethod
-    def __execute_dag(cls, root: RawLayer, ipt: Any, results: List[Any]) -> List[Any]:
-        """从root开始，以input_tensor为输入执行RawLayer组成的DAG，把各layer的计算结果放在results[root.id_]中
+    def __execute_dag(cls, layers: List[Node], ipt: Any, results: List[Any], node2index: Dict[Node, int]) -> List[Any]:
+        """从root开始，以input_tensor为输入执行RawLayer组成的DAG，把各layer的计算结果放在results[node2index[root]]中
         results长度必须与总layer数相同"""
-        if results[root.id_] is not None:  # 已经计算过，直接返回
-            return results
-        if len(root.ac_layers) <= 1:  # root为起始结点或链上结点，直接使用ipt计算
-            with torch.no_grad():
-                results[root.id_] = root.module(ipt)
-        else:  # root有多个前驱，不使用ipt而使用results中的结果
-            inputs = []
-            for ac_layer in root.ac_layers:
-                if results[ac_layer.id_] is not None:  # 不为空，已计算出
-                    inputs.append(results[ac_layer.id_])  # 按顺序记录计算结果
-                else:  # 这个前驱结点还没计算，root及其后继就先不计算，直接返回
-                    return results
-            with torch.no_grad():
-                results[root.id_] = root.module(*inputs)  # 将所有前驱结果作为输入
-        for ds_layer in root.ds_layers:
-            results = cls.__execute_dag(ds_layer, results[root.id_], results)
+        for root in layers:
+            if results[node2index[root]] is not None:  # 已经计算过，直接返回
+                return results
+            if len(root.inputs) == 0:  # root为起始结点，直接使用ipt计算
+                with torch.no_grad():
+                    results[node2index[root]] = root.forward(ipt)
+            else:  # 不使用ipt而使用results中的结果
+                inputs = []
+                for inodelist in root.inputs:
+                    for node in inodelist:
+                        if node in node2index and results[node2index[node]] is not None: # 不为空，已计算出
+                            inputs.append(results[node2index[node]])
+                with torch.no_grad():
+                    results[node2index[root]] = root.forward(inputs[0] if len(inputs) == 1 else inputs)  # 将所有前驱结果作为输入
         return results
 
     @staticmethod
