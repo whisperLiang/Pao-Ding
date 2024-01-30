@@ -99,9 +99,9 @@ class Worker(Thread):
             super().__init__(node)
             self.cost = 0
 
-        def execute(self, *inputs: Tensor) -> None:
+        def execute(self, inputs) -> None:
             begin = time.time()
-            super().execute(*inputs)
+            super().execute(inputs)
             self.cost = time.time() - begin
 
     @classmethod

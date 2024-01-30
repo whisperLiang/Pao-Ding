@@ -83,6 +83,7 @@ class DagDNN:
                         if [o_nodelist[ind+1]] not in o_nodelist[ind].outputs:
                             o_nodelist[ind].outputs.append([o_nodelist[ind+1]])
                             o_nodelist[ind].outdegree += 1
+                            o_nodelist[ind].fixedoutd += 1
                         if [o_nodelist[ind]] not in o_nodelist[ind+1].inputs:
                             o_nodelist[ind+1].inputs.append([o_nodelist[ind]])
                             o_nodelist[ind+1].indegree += 1

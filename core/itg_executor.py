@@ -40,7 +40,8 @@ class ExNode(Node):
     # noinspection PyMissingConstructor
     def __init__(self, node: Node) -> None:
         super().__dict__.update(node.__dict__)  # 使用Node的所有成员变量初始化ExNode的所有成员变量
-        self.__finished: bool = False  # 当前节点是否已经完成
+        self.outdegree = self.fixedoutd # 判断何时将self.__finished设置为True
+        self.__finished: bool = False  # 当前节点是否未完成
 
     def set_finish(self, output: Optional[Tensor]) -> None:
         """执行此函数的节点不运行execute，只是设置输入以便后继获取
@@ -48,19 +49,21 @@ class ExNode(Node):
         """
         assert self.outresult is None and not self.__finished, "not-None or finished node cannot be set!"
         if output is not None and not self.inputs:
-            self.inputs = output
+            self.inputs.append(output)
         else:
             self.outresult = output
             self.__finished = True
 
-    def execute(self, *inputs: Tensor) -> None:
+    def execute(self, inputs) -> None:
         """inputs为输入，执行并保存输出"""
         assert self.outresult is None and not self.__finished, "output has been set!"
         with torch.no_grad():
-            self.outresult = self.forward(*inputs)
-        self.__finished = True
+            self.outresult = self.forward(inputs)
 
     def get_output(self) -> Optional[Tensor]:
+        self.outdegree -= 1
+        if self.outdegree == 0:
+            self.__finished = True
         return self.outresult
 
     def finished(self) -> bool:
@@ -74,6 +77,7 @@ class ExNode(Node):
     def reset(self):
         """完全重置，回到初始状态"""
         self.clear()
+        self.outdegree = self.fixedoutd
         self.__finished = False
 
 
@@ -102,7 +106,7 @@ class ItgExecutor(Executor, Generic[T]):
                         if node in job.node2index and self.__ex_dag[job.node2index[node]].get_output() is not None:
                             inputs.append(self.__ex_dag[job.node2index[node]].get_output())
 
-            self.__ex_dag[exec_id].execute(*inputs)
+            self.__ex_dag[exec_id].execute(inputs[0] if len(inputs) == 1 else inputs)
             # 内存回收
             for inodelist in self.__ex_dag[exec_id].inputs:
                 for node in inodelist:

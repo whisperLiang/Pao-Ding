@@ -23,6 +23,7 @@ class Node(object):
         self.module_class = module.__class__ # class type of the module
         self.indegree = 0 # indegree of the node to judge whether its inputs are all ready
         self.outdegree = 0 # outdegree of the node to judge whether it is necessary to save the result
+        self.fixedoutd = 0 # fixed outdegree of the node     
         self.inshape = inshape # input shape
         self.outshape = outshape # output shape
         self.outresult = None # output result
@@ -402,6 +403,7 @@ class DependencyGraph(object):
                             nodelist[0].inshape = input_nodelist[-1].outshape
                         nodelist[0].indegree += 1
                         input_nodelist[-1].outdegree += 1
+                        input_nodelist[-1].fixedoutd += 1
                         input_nodelist[-1].add_output(nodelist)
                         if input_nodelist[-1].outshape is None:
                             input_nodelist[-1].outshape = nodelist[0].inshape
@@ -502,6 +504,7 @@ def forward_ll(dpg, x, ignored_blocks=[]):
                     if [o_nodelist[ind+1]] not in o_nodelist[ind].outputs:
                         o_nodelist[ind].outputs.append([o_nodelist[ind+1]])
                         o_nodelist[ind].outdegree += 1
+                        o_nodelist[ind].fixedoutd += 1
                     if [o_nodelist[ind]] not in o_nodelist[ind+1].inputs:
                         o_nodelist[ind+1].inputs.append([o_nodelist[ind]])
                         o_nodelist[ind+1].indegree += 1

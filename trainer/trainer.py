@@ -11,16 +11,16 @@ from torch import Tensor
 from core.util import cached_func
 from master.master import Master
 from core.predictor import Predictor, NZPred
-from core.raw_dnn import RawDNN
+from core.dag_dnn import DagDNN
 
 
 class Trainer(Thread):
     """运行在较高性能和较大内存的PC上，收集数据并训练稀疏率预测模型"""
 
-    def __init__(self, raw_dnn: RawDNN, video_path: str, frame_size: Tuple[int, int], config: Dict[str, Any]):
+    def __init__(self, dag_dnn: DagDNN, video_path: str, frame_size: Tuple[int, int], config: Dict[str, Any]):
         super().__init__()
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self.__raw_dnn = raw_dnn
+        self.__dag_dnn = dag_dnn
         self.__video_path = video_path
         self.__frame_size = frame_size
         self.__frame_num = config['frame_num']
@@ -29,22 +29,22 @@ class Trainer(Thread):
         self.__o_lcnz = []
 
     def run(self) -> None:
-        cnn_name = self.__raw_dnn.dnn_cfg.name
+        cnn_name = self.__dag_dnn.dnn_cfg.name
         vid_name = os.path.basename(self.__video_path).split('.')[0]  # 只保留文件名，去掉拓展名
         frm_size = f"{self.__frame_size[0]}x{self.__frame_size[1]}"
         trn_numb = str(self.__frame_num)
         data_name = cnn_name + '.' + vid_name + '.' + frm_size + '.' + trn_numb
         self.__logger.info("collecting O_LFCNZ data...")
-        o_lfcnz = cached_func(data_name + '.o_lfcnz', self.collect_olfcnz, self.__raw_dnn, self.__video_path,
+        o_lfcnz = cached_func(data_name + '.o_lfcnz', self.collect_olfcnz, self.__dag_dnn, self.__video_path,
                             self.__frame_num, self.__frame_size, logger=self.__logger)
         self.__logger.info("computing O_LCNZ data...")
         o_lcnz = cached_func(data_name + '.o_lcnz', self.avg_lcnz, o_lfcnz, logger=self.__logger)
         self.__logger.info("collecting LFCNZ data...")
-        lfcnz = cached_func(data_name + '.lfcnz', self.collect_lfcnz, self.__raw_dnn, self.__video_path,
+        lfcnz = cached_func(data_name + '.lfcnz', self.collect_lfcnz, self.__dag_dnn, self.__video_path,
                             self.__frame_num, self.__frame_size, logger=self.__logger)
         self.__logger.info("training predictors...")
         predictors = cached_func(data_name + '.pred', self.train_predictors,
-                                 self.__raw_dnn, lfcnz, logger=self.__logger)
+                                 self.__dag_dnn, lfcnz, logger=self.__logger)
         self.__logger.info("train finished, predictors are ready")
         with self.__cv:
             self.__o_lcnz = o_lcnz
@@ -60,13 +60,13 @@ class Trainer(Thread):
             return NZPred(self.__o_lcnz, self.__predictors)
 
     @classmethod
-    def collect_olfcnz(cls, raw_dnn: RawDNN, video_path: str,
+    def collect_olfcnz(cls, dag_dnn: DagDNN, video_path: str,
                       frame_num: int, frame_size: Tuple[int, int]) -> List[List[List[float]]]:
         """收集数据格式O_LFCNZ：data[层l][帧f][通道c] = 帧f在层l输出数据中通道c的非零占比nz"""
         cap = cv2.VideoCapture(video_path)
-        o_lfcnz = [[[] for f in range(frame_num)] for l in raw_dnn.layers]
+        o_lfcnz = [[[] for f in range(frame_num)] for l in dag_dnn.layers]
         for f in tqdm.tqdm(range(frame_num), f"collecting o_lfcnz"):
-            opts = raw_dnn.execute(Master.get_ipt_from_video(cap, frame_size))
+            opts = dag_dnn.execute(Master.get_ipt_from_video(cap, frame_size))
             lcnz = [cls._layer_cnz(ts) for ts in opts]
             for l in range(len(lcnz)):
                 o_lfcnz[l][f] = lcnz[l]
@@ -85,14 +85,14 @@ class Trainer(Thread):
         return lcnz
 
     @classmethod
-    def collect_lfcnz(cls, raw_dnn: RawDNN, video_path: str,
+    def collect_lfcnz(cls, dag_dnn: DagDNN, video_path: str,
                       frame_num: int, frame_size: Tuple[int, int]) -> List[List[List[float]]]:
         """收集LFCNZ数据：data[层l][帧f][通道c] = (帧f-上一帧)在层l输出数据中通道c的非零占比nz"""
         cap = cv2.VideoCapture(video_path)
         lst_results = []
-        lfcnz = [[] for _ in raw_dnn.layers]
+        lfcnz = [[] for _ in dag_dnn.layers]
         for _ in tqdm.tqdm(range(frame_num)):
-            cur_results = raw_dnn.execute(Master.get_ipt_from_video(cap, frame_size))
+            cur_results = dag_dnn.execute(Master.get_ipt_from_video(cap, frame_size))
             lcnz = cls._dif_lcnz(lst_results, cur_results)
             for l in range(len(lcnz)):
                 lfcnz[l].append(lcnz[l])
@@ -100,11 +100,11 @@ class Trainer(Thread):
         return lfcnz
 
     @classmethod
-    def train_predictors(cls, raw_dnn: RawDNN, lfcnz: List[List[List[float]]]) -> List[Predictor]:
+    def train_predictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> List[Predictor]:
         predictors = []
-        for l in tqdm.tqdm(range(len(raw_dnn.layers))):
-            layer = raw_dnn.layers[l]
-            predictor = raw_dnn.dnn_cfg.mdl2pred[layer.module.__class__](layer.module)
+        for l in tqdm.tqdm(range(len(dag_dnn.layers))):
+            layer = dag_dnn.layers[l]
+            predictor = dag_dnn.dnn_cfg.mdl2pred[layer.module.__class__](layer.module)
             afcnz = [lfcnz[al.id_] for al in layer.ac_layers]
             predictor.fit(afcnz, lfcnz[layer.id_])
             predictors.append(predictor)

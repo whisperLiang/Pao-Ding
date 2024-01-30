@@ -47,3 +47,5 @@
 - [x] 复现了ResMap，调度策略在遇到resnet这种dag格式时报错，提交了issues。https://github.com/nju-cn/ResMap
 ## 2024.1.28
 - [x] 实现了worker for cross cloud ladder,基于VGG自动提取的DAG计算图拓扑排序实现
+## 2024.1.29
+- [x] 实现了worker for cross cloud ladder,基于resnet50自动提取的DAG计算图拓扑排序实现
