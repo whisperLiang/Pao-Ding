@@ -12,6 +12,15 @@
             "args": ["worker", "--config", "config.yml", "--id", "0"],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Debug Trainer0",
+            "type": "python",
+            "request": "launch",
+            "program": "D:/ProgramCode/Cross-Cloud-Ladder/main.py",
+            "args": ["trainer", "--config", "config.yml"],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
