@@ -19,8 +19,6 @@ class MyScheduler(Scheduler):
                  wk_cap: List[float], wk_bwth: List[float], ly_comp: List[float],
                  job_type: Type[Job], ifr_num: int, config: Dict[str, Any]):
         self.__sdag = s_dag
-        artery = self.get_artery(self.__sdag)
-        assert len(artery) == len(s_dag), "This scheduler is only used for chain!"
         self.__o_lbsz = [sz * 4 for sz in self.lcnz2lsz(nzpred.o_lcnz, s_dag)]
         self.__predictors = nzpred.predictors
         self.__wk_cap = wk_cap

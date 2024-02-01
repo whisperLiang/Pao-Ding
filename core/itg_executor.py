@@ -43,15 +43,13 @@ class ExNode(Node):
         self.outdegree = self.fixedoutd # 判断何时将self.__finished设置为True
         self.__finished: bool = False  # 当前节点是否未完成
 
-    def set_finish(self, output: Optional[Tensor]) -> None:
-        """执行此函数的节点不运行execute，只是设置输入以便后继获取
-        当output为None时，此节点不会被用到，只是将此节点标记为已完成，以便进行内存回收
-        """
-        assert self.outresult is None and not self.__finished, "not-None or finished node cannot be set!"
-        if output is not None and not self.inputs:
-            self.inputs.append(output)
-        else:
-            self.outresult = output
+    def init_inputs(self, output: Optional[Tensor]) -> None:
+        """设置输入数据"""
+        self.inputs.append(output)
+
+    def set_finished(self) -> None:
+        self.outdegree -= 1
+        if self.outdegree == 0:
             self.__finished = True
 
     def execute(self, inputs) -> None:
@@ -61,9 +59,6 @@ class ExNode(Node):
             self.outresult = self.forward(inputs)
 
     def get_output(self) -> Optional[Tensor]:
-        self.outdegree -= 1
-        if self.outdegree == 0:
-            self.__finished = True
         return self.outresult
 
     def finished(self) -> bool:
@@ -105,6 +100,7 @@ class ItgExecutor(Executor, Generic[T]):
                     for node in inodelist:
                         if node in job.node2index and self.__ex_dag[job.node2index[node]].get_output() is not None:
                             inputs.append(self.__ex_dag[job.node2index[node]].get_output())
+                            self.__ex_dag[job.node2index[node]].set_finished()
 
             self.__ex_dag[exec_id].execute(inputs[0] if len(inputs) == 1 else inputs)
             # 内存回收
@@ -126,7 +122,7 @@ class ItgExecutor(Executor, Generic[T]):
         """为job初始化：设置输入数据，并将输入节点的所有前驱标记为finished"""
         # 设置输入节点的数据
         for node_id, output in job.id2data.items():
-            self.__ex_dag[node_id].set_finish(output)
+            self.__ex_dag[node_id].init_inputs(output)
 
     def __reset(self) -> None:
         """重置所有Node的状态"""

@@ -9,7 +9,7 @@ from core.executor import Node, Job
 from core.ifr import WkJob, IFR
 from core.itg_executor import ExNode, ItgExecutor, ItgJob
 from core.predictor import Predictor, NZPred
-from core.raw_dnn import RawDNN
+from core.dag_dnn import DagDNN
 
 
 class _SizingExNode(ExNode):
@@ -18,31 +18,27 @@ class _SizingExNode(ExNode):
         super().__init__(node)
         self.out_size = None
 
-    def set_finish(self, output: Optional[Tensor]) -> None:
-        super().set_finish(output)
-        self.out_size = tuple(self.get_output().shape)[1:]
-
-    def execute(self, *inputs: Tensor) -> None:
-        super().execute(*inputs)
-        self.out_size = tuple(self.get_output().shape)[1:]
+    def execute(self, inputs) -> None:
+        super().execute(inputs)
+        self.out_size = tuple(self.get_output().shape)
 
 
 class SizedNode(Node):
     """根据输出数据大小和稀疏率预测模型进行初始化"""
     def __init__(self, se_node: _SizingExNode):
-        super().__init__(se_node.id, se_node.ancients, se_node.descendants, se_node.calc)
+        super().__init__(se_node)
         self.out_size: Tuple[int, int, int] = se_node.out_size  # (通道数, 行数, 列数)
-        _, R, C = se_node.out_size
+        R, C = se_node.out_size[-2:]
         self.nz_thres = (1 - 1/C - 1/(R*C))/2  # 一个通道的非零占比<nz_thres时，稀疏压缩的数据传输量更少
 
     @classmethod
-    def raw2dag_sized(cls, raw_dnn: RawDNN, frame_size: Tuple[int, int]) -> List['SizedNode']:
-        """使用RawDNN和指定的帧大小，初始化保存有输出数据大小的DAG图"""
-        itg_extor = ItgExecutor(raw_dnn, _SizingExNode)
+    def raw2dag_sized(cls, dag_dnn: DagDNN, frame_size: Tuple[int, int]):
+        """使用DagDNN和指定的帧大小，初始化保存有输出数据大小的DAG图"""
+        itg_extor = ItgExecutor(dag_dnn, _SizingExNode)
         ipt = torch.rand(1, 3, *frame_size)
-        job = ItgJob(list(range(1, len(raw_dnn.layers))), [raw_dnn.layers[-1].id_], {0: ipt})
+        job = ItgJob(list(range(len(dag_dnn.layers))), [len(dag_dnn.layers)-1], dag_dnn.node2index, {0: ipt})
         itg_extor.exec(job)
-        return [cls(se_node) for se_node in itg_extor.dag()]
+        return [[cls(se_node).out_size, cls(se_node).nz_thres] for se_node in itg_extor.dag()]
 
 
 class Scheduler:
@@ -77,11 +73,6 @@ class Scheduler:
         :param s_ready: 根据fs_cost和当前IFR状态给出的各阶段就绪时间的估计。fs_cost不合法则为None
         :return ifr_group ifr_group[i]对应ipt_group[i]
         """
-
-    @classmethod
-    def get_artery(cls, dag: List[Node]) -> List[Node]:
-        """找到给定dag的所有主干Node，按数据流动方向排序"""
-        return cls._get_artery(0, [None for _ in dag], dag)
 
     @classmethod
     def split_chain(cls, ly_comp: List[float], wk_cap: List[float]) -> List[int]:
@@ -163,10 +154,14 @@ class Scheduler:
         lsz = []
         for l in range(len(s_dag)):
             size = 0
-            H, R, C = s_dag[l].out_size
+            try:
+                H, R, C = s_dag[l][0][-3:]
+            except:
+                R, C = s_dag[l][0][-2:]
+                H = 1
             for c in range(H):
                 p = lcnz[l][c]
-                if p < s_dag[l].nz_thres:
+                if p < s_dag[l][1]:
                     size += 2 * R * C * p + R + 1
                 else:
                     size += R * C
@@ -185,42 +180,9 @@ class Scheduler:
         return olys
 
     @classmethod
-    def _get_artery(cls, begin: int, volumes: List[Optional[Fraction]], dag: List[Node]) -> List[Node]:
-        """从begin开始，沿着DNN的DAG结构，向后填写dag中各Node的流量，并返回DAG主干上的所有Node，返回值中按照数据流动方向排好序。
-        dag起始点流量为1，向后流动，每遇到一个分叉点就均分一次，每遇到一个汇聚点就全加起来。volume填写之后就不会更改了。
-        注意：这里默认dag的起点和终点都在主干上，不存在多个起点或多个终点
-        :param begin 起始点在dag中的索引，起始点不一定在主干上
-        :param volumes dag中各Node对应的流量，初始为None，值不超过1，等于1表示在主干上
-        :param dag DNN的完整DAG结构
-        :return 所有在DNN主干上的Node，并按照数据流动顺序排序"""
-        # 注意：Node中的起点是存在前驱的，所以要优先考虑
-        if len(dag[begin].ancients) == 0:  # begin为DAG的起点，将volume设置为1
-            volumes[begin] = Fraction(1)
-        elif any(volumes[ac] is None for ac in dag[begin].ancients):  # begin不是起点，且有前驱没访问过，返回空
-            return []
-        elif volumes[begin] is not None:  # begin已经访问过，前一个分支已有后面的主干Node，因此不再访问
-            # 有可能两条分支中一条分支没有Node，从而沿着有Node的分支第一次访问就可以填写汇聚点的volume，第二次访问时汇聚点volume就不为空了
-            return []
-        else:  # 填写自身流量，因为之前begin没有访问过，所以此时volumes[begin]必定为None
-            # 所有前驱都访问过了，当前点的流量为所有前驱分给自己的流量之和
-            # 这里len(dag[ac].descendants)不会为0，因为ac是begin的前驱，所以至少有begin这一个后继
-            volumes[begin] = sum(volumes[ac] / len(dag[ac].descendants) for ac in dag[begin].ancients)
-        artery = []
-        if volumes[begin] == 1:
-            artery.append(dag[begin])
-        # 向后传播流量
-        if len(dag[begin].descendants) == 0:  # begin为终点，直接返回
-            return artery
-        else:  # 各后继计算自己的流量
-            # 因为一个点只有前驱都访问过才会访问，所以这里只会有访问到dag终点的分支返回非空列表，其余均为空列表
-            for ds in dag[begin].descendants:
-                artery.extend(cls._get_artery(ds, volumes, dag))
-        return artery
-
-    @classmethod
     def _predict_dag(cls, node_id: int, res_lcnz: List[List[float]],
                      dag: List[Node], predictors: List[Predictor]) -> None:
-        """模仿core.raw_dnn.RawDNN.__execute_dag
+        """模仿core.dag_dnn.DagDNN.__execute_dag
         res_lcnz的每个元素必须初始化为空列表
         """
         if len(res_lcnz[node_id]) > 0:

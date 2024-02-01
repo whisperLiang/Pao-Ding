@@ -49,3 +49,7 @@
 - [x] 实现了worker for cross cloud ladder,基于VGG自动提取的DAG计算图拓扑排序实现
 ## 2024.1.29
 - [x] 实现了worker for cross cloud ladder,基于resnet50自动提取的DAG计算图拓扑排序实现
+## 2024.1.30
+- [x] 实现了trainer for cross cloud ladder
+## 2024.2.1
+- [x] 在层拓扑排序中添加了输入节点

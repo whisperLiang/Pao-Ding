@@ -9,7 +9,7 @@ from torch import Tensor
 from torchvision.transforms import transforms
 
 from core.executor import Job
-from core.raw_dnn import RawDNN
+from core.dag_dnn import DagDNN
 from core.util import cached_func
 from master.ifr_tracker import IFRTracker
 from master.scheduler import SizedNode, Scheduler
@@ -17,7 +17,7 @@ from rpc.stub_factory import MStubFactory
 
 
 class Master:
-    def __init__(self, wk_num: int, raw_dnn: RawDNN, video_path: str, frame_size: Tuple[int, int],
+    def __init__(self, wk_num: int, dag_dnn: DagDNN, video_path: str, frame_size: Tuple[int, int],
                  job_type: Type[Job], check: bool, stb_fct: MStubFactory, config: Dict[str, Any]):
         super().__init__()
         self.__logger = logging.getLogger(self.__class__.__name__)
@@ -28,9 +28,9 @@ class Master:
         self.__tracker = IFRTracker(self.__ifr_num, wk_num, pd_num, stb_fct)
         self.__logger.info("Profiling data sizes...")
         self.__frame_size = frame_size
-        self.__raw_dnn: Optional[RawDNN] = (raw_dnn if check else None)
+        self.__dag_dnn: Optional[DagDNN] = (dag_dnn if check else None)
         self.__vid_cap = cv2.VideoCapture(video_path)
-        self.__init_scheduler(wk_num, raw_dnn, job_type, config)  # 初始化Scheduler会用到其他参数，所以最后执行
+        self.__init_scheduler(wk_num, dag_dnn, job_type, config)  # 初始化Scheduler会用到其他参数，所以最后执行
         self.__logger.info("Master init finished")
 
     def run(self) -> None:
@@ -42,7 +42,7 @@ class Master:
             ipt_group = [self.get_ipt_from_video(self.__vid_cap, self.__frame_size)
                      for _ in range(min(gp_size, self.__ifr_num-ifr_cnt)) if self.__vid_cap.isOpened()]
             ifr_group = self.__scheduler.gen_ifr_group(ifr_cnt, pre_ipt, ipt_group, s_ready)
-            self.__tracker.send_group(ipt_group, ifr_group, self.__raw_dnn is not None)
+            self.__tracker.send_group(ipt_group, ifr_group, self.__dag_dnn is not None)
             pre_ipt = ipt_group[-1]
             ifr_cnt += len(ipt_group)
             time.sleep(self.__itv_time)
@@ -52,20 +52,20 @@ class Master:
 
     def report_finish(self, ifr_id: int, tensor: Tensor = None) -> None:
         ipt = self.__tracker.report_finish(ifr_id)
-        if self.__raw_dnn is not None:
+        if self.__dag_dnn is not None:
             assert tensor is not None, "check is True but result is None!"
             self.__logger.info(f"checking IFR{ifr_id}")
-            results = self.__raw_dnn.execute(ipt)
+            results = self.__dag_dnn.execute(ipt)
             err = torch.max(torch.abs(tensor-results[-1]))
             if err < 1e-5:
                 self.__logger.info(f"IFR{ifr_id} max_err={err}")
             else:
                 self.__logger.warning(f"IFR{ifr_id} max_err={err} > 1e-5!")
 
-    def __init_scheduler(self, wk_num: int, raw_dnn: RawDNN, job_type: Type[Job], config: Dict[str, Any]) -> None:
+    def __init_scheduler(self, wk_num: int, dag_dnn: DagDNN, job_type: Type[Job], config: Dict[str, Any]) -> None:
         # 加载DAG，获取predictor
-        s_dag = cached_func(f"{raw_dnn.dnn_cfg.name}.{self.__frame_size[0]}x{self.__frame_size[1]}.sz",
-                            SizedNode.raw2dag_sized, raw_dnn, self.__frame_size, logger=self.__logger)
+        s_dag = cached_func(f"{dag_dnn.model_name}.{self.__frame_size[0]}x{self.__frame_size[1]}.sz",
+                            SizedNode.raw2dag_sized, dag_dnn, self.__frame_size, logger=self.__logger)
         self.__logger.info(f"Getting predictors from trainer...")
         nzpred = self.__stb_fct.trainer().get_nzpred()
         # 获取worker计算能力及耗时
@@ -76,7 +76,7 @@ class Master:
         base_wk = 0  # 编号最小的作为计算能力的baseline
         wk_cap = []  # worker_id->相对计算能力
         for wk, costs in enumerate(wk_costs):
-            assert costs[0] == 0, f"InputModule of Worker{wk} cost should be 0!"
+            # assert costs[0] == 0, f"InputModule of Worker{wk} cost should be 0!"
             # Worker计算能力：基准worker的总耗时 / 当前worker的总耗时
             wk_cap.append(sum(wk_costs[base_wk]) / sum(costs))
         self.__logger.info(f"baseline=w{base_wk}, wk_cap={wk_cap}")
