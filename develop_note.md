@@ -54,3 +54,4 @@
 ## 2024.2.1
 - [x] 在层拓扑排序中添加了输入节点
 - [x] 成功实现了scheduler的初始化
+- [x] 实现了predictors only for relu, 三种拟合方式
