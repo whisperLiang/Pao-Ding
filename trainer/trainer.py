@@ -43,7 +43,7 @@ class Trainer(Thread):
         lfcnz = cached_func(data_name + '.lfcnz', self.collect_lfcnz, self.__dag_dnn, self.__video_path,
                             self.__frame_num, self.__frame_size, logger=self.__logger)
         self.__logger.info("training predictors...")
-        predictors = cached_func(data_name + '.pred', self.train_predictors,
+        predictors = cached_func(data_name + '.pred', self.train_relupredictors,
                                  self.__dag_dnn, lfcnz, logger=self.__logger)
         self.__logger.info("train finished, predictors are ready")
         with self.__cv:
@@ -114,6 +114,20 @@ class Trainer(Thread):
                             afcnz.append(lfcnz[dag_dnn.node2index[node]])
 
                 predictor.fit(afcnz, lfcnz[l])
+                predictors[l] = predictor
+        return predictors
+    
+    def train_relupredictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
+        """
+        根据原始图片的残差非零率预测Relu层残差非零率
+        """
+        predictors = {}
+        for l in tqdm.tqdm(range(len(dag_dnn.layers))):
+            layer = dag_dnn.layers[l]
+            layer_type = layer.module.__class__
+            if layer_type in dag_dnn.mdl2pred:
+                predictor = dag_dnn.mdl2pred[layer_type](layer.module)
+                predictor.fit(lfcnz[0], lfcnz[l])
                 predictors[l] = predictor
         return predictors
 
