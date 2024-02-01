@@ -3,6 +3,7 @@ import sys
 
 import torch
 from typing import List, Any, Dict, Type
+from core.predictor import Predictor, MLPPredictor, LNRPredictor, DRPredictor
 
 from torch import Tensor
 from torch.nn import Module
@@ -11,7 +12,16 @@ from model_split import DependencyGraph, Node
 from collections import deque
 from torchvision.models.detection.image_list import ImageList
 from networkx import DiGraph
-from core.predictor import Predictor, MLPPredictor, LNRPredictor, DRPredictor
+
+class _InputmoduleOp(Module):
+    def __init__(self):
+        super(_InputmoduleOp, self).__init__()
+
+    def __repr__(self):
+        return "_Inputmodule_()"
+    
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return input
 
 class DagDNN:
     def __init__(self, dpg: DependencyGraph):
@@ -74,6 +84,21 @@ class DagDNN:
         # Step 3: Perform topological sorting
         layer_topo = []
         node2index = {}
+
+        # 创建输入节点
+        inputmodule = _InputmoduleOp()
+        oinshape = x.shape
+        inputnode = Node(
+            module=inputmodule,
+            grad_fn=None,
+            inshape=oinshape,
+            outshape=oinshape
+        )
+        inputnode.add_output([dpg.head_node])
+        dpg.head_node.add_input([inputnode])
+        layer_topo.append(inputnode)
+        node2index[inputnode] = len(layer_topo) - 1
+
         while queue:
             
             # node = queue.popleft()
@@ -196,7 +221,7 @@ class DagDNN:
         for root in layers:
             if results[node2index[root]] is not None:  # 已经计算过，直接返回
                 return results
-            if len(root.inputs) == 0:  # root为起始结点，直接使用ipt计算
+            if node2index[root] == 0:  # root为起始结点，直接使用ipt计算
                 with torch.no_grad():
                     results[node2index[root]] = root.forward(ipt)
             else:  # 不使用ipt而使用results中的结果
