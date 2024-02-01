@@ -53,3 +53,4 @@
 - [x] 实现了trainer for cross cloud ladder
 ## 2024.2.1
 - [x] 在层拓扑排序中添加了输入节点
+- [x] 成功实现了scheduler的初始化
