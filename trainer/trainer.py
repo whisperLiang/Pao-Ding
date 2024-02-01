@@ -127,7 +127,7 @@ class Trainer(Thread):
             layer_type = layer.module.__class__
             if layer_type in dag_dnn.mdl2pred:
                 predictor = dag_dnn.mdl2pred[layer_type](layer.module)
-                predictor.fit(lfcnz[0], lfcnz[l])
+                predictor.fit([lfcnz[0]], lfcnz[l])
                 predictors[l] = predictor
         return predictors
 

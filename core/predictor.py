@@ -20,8 +20,8 @@ class Predictor(ABC):
     @abstractmethod
     def fit(self, afcnz: List[List[List[float]]], fcnz: List[List[float]]) -> 'Predictor':
         """使用afcnz和fcnz训练模型
-        :param afcnz 输入数据，afcnz[a][f][c]=第a个前驱第f帧第c个通道的非零占比
-        :param fcnz 输出数据，fcnz[f][c]=第f帧第c个通道的非零占比
+        :param afcnz 输入数据，afcnz[a][f][c]=第a个前驱第f帧与第f-1帧差值在第c个通道的非零占比
+        :param fcnz 输出数据，fcnz[f][c]=第f帧与第f-1帧差值在第c个通道的非零占比
         """
         return self
 
@@ -102,6 +102,40 @@ class LNRPredictor(Predictor):
     def linear(regr: LinearRegression, nz: float) -> float:
         return regr.coef_[0]*nz + regr.intercept_
 
+class LNRreluPredictor(Predictor):
+    """使用线性函数(LiNeaR)，对每个通道分别进行预测
+    输入输出通道数必须相同，相应层只有一个前驱"""
+    def __init__(self, module: torch.nn.Module):
+        super().__init__(module)
+        self.regrs: List[LinearRegression] = []
+
+    def avg_lfnz(self, lfcnz: List[List[float]]) -> List[float]:
+        """根据lfcnz数据，计算某层各帧的cnz均值，以此作为对f帧在某层输出数据nz的估计
+        """
+        lfnz = [[] for _ in lfcnz]
+        for f, fcnz in enumerate(lfcnz):
+            nchan = len(fcnz)
+            lfnz[f] = [sum(fcnz[c] for c in range(nchan))/nchan]
+        return lfnz
+
+    def fit(self, afcnz: List[List[List[float]]], fcnz: List[List[float]]) -> 'LNRreluPredictor':
+        assert len(afcnz) == 1
+        afnz = self.avg_lfnz(afcnz[0])
+        fnz = self.avg_lfnz(fcnz)
+        X, y = np.array(afnz), np.array(fnz)
+        self.regrs = [LinearRegression() for _ in range(X.shape[1])]
+        for c, regr in enumerate(self.regrs):
+            regr.fit(X[:, c].reshape(-1, 1), y[:, c])
+        return self
+
+    def predict(self, acnz: List[List[float]]) -> List[float]:
+        # 使用map以加快速度
+        anz = self.avg_lfnz(acnz[0])
+        return list(map(self.linear, self.regrs, anz))
+
+    @staticmethod
+    def linear(regr: LinearRegression, nz: float) -> float:
+        return regr.coef_[0]*nz + regr.intercept_
 
 class DRPredictor(Predictor):
     """DiRect：InputModule, BasicFork"""
