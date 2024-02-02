@@ -55,3 +55,5 @@
 - [x] 在层拓扑排序中添加了输入节点
 - [x] 成功实现了scheduler的初始化
 - [x] 实现了predictors only for relu, 三种拟合方式
+## 2024.2.2
+- [x] 实现了master for cross cloud ladder，相对于原始resmap，可以支持DAG格式的调度
