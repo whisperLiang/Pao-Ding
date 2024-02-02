@@ -31,7 +31,7 @@ video_path: media/parking.mp4
 # Adjust the input frame to [nrow, ncol], which is a tuple of two int. None indicates don't resize.
 frame_size: !!python/tuple [480, 720]
 # "itg" or "dif". This option generates two corresponding options: executor_type and job_type
-mode: itg
+mode: dif
 # Whether check the correctness of result
 check: !!bool false
 

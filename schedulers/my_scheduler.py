@@ -6,6 +6,7 @@ from torch import Tensor
 
 from core.dif_executor import DifJob
 from core.executor import Job
+from model_split import Node
 from core.ifr import IFR, WkJob
 from core.predictor import NZPred
 from master.scheduler import SizedNode, Scheduler
@@ -15,10 +16,12 @@ from schedulers.metric import LatencyMetric, Metric
 class MyScheduler(Scheduler):
     """以IFR Group为粒度进行调度"""
     # TODO: 改进！
-    def __init__(self, s_dag: List[SizedNode], nzpred: NZPred,
+    def __init__(self, s_dag, nzpred: NZPred,
                  wk_cap: List[float], wk_bwth: List[float], ly_comp: List[float],
-                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any]):
+                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any], layers: List[Node], node2index: Dict[Node, int]):
         self.__sdag = s_dag
+        self.__layers = layers
+        self.__node2index = node2index
         self.__o_lbsz = [sz * 4 for sz in self.lcnz2lsz(nzpred.o_lcnz, s_dag)]
         self.__predictors = nzpred.predictors
         self.__wk_cap = wk_cap
@@ -43,9 +46,16 @@ class MyScheduler(Scheduler):
                       ipt_group: List[Tensor], s_ready: List[float] = None) -> List[IFR]:
         """一个group的所有ifr都用同一个执行方案。ifr_cnt为当前group中第一个IFR的id
         注意：这里只考虑链状CNN，只考虑云边协同(只有两个Worker)
+
+        为一组输入生成相应的IFR组
+        :param ifr_cnt: 当前group中第一个IFR的id
+        :param pre_ipt: 上一帧的输入
+        :param ipt_group: 要发出去的所有输入帧，1<=长度<=group_size
+        :param s_ready: 根据fs_cost和当前IFR状态给出的各阶段就绪时间的估计。fs_cost不合法则为None
+        :return ifr_group ifr_group[i]对应ipt_group[i]
         """
         assert len(ipt_group) > 0
-        dif_group = [ipt_group[0] - pre_ipt] + [ipt_group[i] - ipt_group[i-1] for i in range(1, len(ipt_group))]
+        dif_group = [ipt_group[0] - pre_ipt] + [ipt_group[i] - ipt_group[i-1] for i in range(1, len(ipt_group))] # 帧差
         # 观察发现，原始数据也存在一定的稀疏性，但是分布非常集中。对于一个层而言，几乎所有帧的非零占比都在平均值附近
         # 所以这里直接使用平均值作为原始数据的非零率，进而计算原始数据大小
         org_gp_lbsz = [self.__o_lbsz for ipt in ipt_group]
@@ -66,7 +76,7 @@ class MyScheduler(Scheduler):
         assert len(self.__fs_cost) == ifr_cnt  # 确保fs_cost中的对应关系正确
         self.__fs_cost.extend(gs_cost)
         # 生成并发送任务
-        wk_jobs = [WkJob(w, self.__job_type(lys, self.elys2olys(lys, self.__sdag), {}))
+        wk_jobs = [WkJob(w, self.__job_type(lys, self.elys2olys(lys, self.__layers, self.__node2index), {}))
                    for w, lys in enumerate(opt_wk_elys)]
         # 更新缓存情况
         self.__pre_wk_ilys[0] = [0]  # worker0必定接收第0层的输出
@@ -76,7 +86,7 @@ class MyScheduler(Scheduler):
         # Worker0接收到的输入数据必定为dif
         ifr_group = []
         for gi, dif in enumerate(dif_group):
-            jobs = copy.deepcopy(wk_jobs)
+            jobs = copy.copy(wk_jobs)
             jobs[0].job.id2data = {0: dif}
             ifr_group.append(IFR(ifr_cnt + gi, jobs))
         return ifr_group

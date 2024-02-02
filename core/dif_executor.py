@@ -6,6 +6,7 @@ from core.itg_executor import ItgExecutor, ItgJob, Job, Executor, ExNode
 from core.util import msg2tensor, tensor2msg
 from rpc.msg_pb2 import JobMsg
 from core.dag_dnn import DagDNN
+from model_split import Node
 
 
 class InCache:
@@ -51,7 +52,7 @@ class OutCache:
 
 class DifJob(Job):
     def __init__(self, exec_ids: List[int], out_ids: List[int], id2dif: Dict[int, Tensor]):
-        super().__init__(exec_ids, out_ids)
+        super().__init__(exec_ids, out_ids, id2dif)
         self._id2dif: Dict[int, Tensor] = id2dif  # dif为(后一帧-前一帧)，node_id->Tensor
 
     def __repr__(self):

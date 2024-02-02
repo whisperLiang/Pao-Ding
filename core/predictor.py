@@ -124,14 +124,14 @@ class LNRreluPredictor(Predictor):
         fnz = self.avg_lfnz(fcnz)
         X, y = np.array(afnz), np.array(fnz)
         self.regrs = [LinearRegression() for _ in range(X.shape[1])]
-        for c, regr in enumerate(self.regrs):
-            regr.fit(X[:, c].reshape(-1, 1), y[:, c])
+        for regr in self.regrs:
+            regr.fit(X, y)
         return self
 
-    def predict(self, acnz: List[List[float]]) -> List[float]:
+    def predict(self, acnz: List[float]) -> List[float]:
         # 使用map以加快速度
-        anz = self.avg_lfnz(acnz[0])
-        return list(map(self.linear, self.regrs, anz))
+        anz = self.avg_lfnz([acnz])
+        return list(map(self.linear, self.regrs, anz[0]))
 
     @staticmethod
     def linear(regr: LinearRegression, nz: float) -> float:

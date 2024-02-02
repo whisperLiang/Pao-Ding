@@ -5,7 +5,8 @@ from typing import List, Optional, Tuple, Dict, Any, Type
 import torch
 from torch import Tensor
 
-from core.executor import Node, Job
+from core.executor import Job
+from model_split import Node
 from core.ifr import WkJob, IFR
 from core.itg_executor import ExNode, ItgExecutor, ItgJob
 from core.predictor import Predictor, NZPred
@@ -36,16 +37,16 @@ class SizedNode(Node):
         """使用DagDNN和指定的帧大小，初始化保存有输出数据大小的DAG图"""
         itg_extor = ItgExecutor(dag_dnn, _SizingExNode)
         ipt = torch.rand(1, 3, *frame_size)
-        job = ItgJob(list(range(len(dag_dnn.layers))), [len(dag_dnn.layers)-1], dag_dnn.node2index, {0: ipt})
+        job = ItgJob(list(range(len(dag_dnn.layers))), [len(dag_dnn.layers)-1], {0: ipt})
         itg_extor.exec(job)
         return [[cls(se_node).out_size, cls(se_node).nz_thres] for se_node in itg_extor.dag()]
 
 
 class Scheduler:
     @abstractmethod
-    def __init__(self, s_dag: List[SizedNode], nzpred: NZPred,
+    def __init__(self, s_dag: Any, nzpred: NZPred,
                  wk_cap: List[float], wk_bwth: List[float], ly_comp: List[float],
-                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any]):
+                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any], layers: List[Node], node2index: Dict[Node, int]):
         pass
 
     @abstractmethod
@@ -135,19 +136,17 @@ class Scheduler:
         """
         cnz = [float(chan.count_nonzero() / chan.nelement()) for chan in dif_ipt[0]]
         lcnz = cls.predict_dag(cnz, s_dag, predictors)
-        lsz = cls.lcnz2lsz(lcnz, s_dag)
+        lsz = cls.relucnz2lsz(lcnz, s_dag)
         return [sz * 4 for sz in lsz]
 
     @classmethod
     def predict_dag(cls, ipt_cnz: List[float], dag: List[Node], predictors: List[Predictor]) -> List[List[float]]:
         """根据输入数据与上一帧的非零占比，预测DAG各个节点输出数据与上一帧的非零占比"""
-        assert len(dag) == len(predictors)
-        results = [[] for _ in range(len(dag))]
-        results[0] = predictors[0].predict([ipt_cnz])
-        for d in dag[0].descendants:
-            cls._predict_dag(d, results, dag, predictors)
-        return results
-
+        relu_nzs = {}  # 记录Relu层的非零率
+        for lid, relu_pred in predictors.items():
+            relu_nzs[lid] = relu_pred.predict(ipt_cnz)
+        return relu_nzs
+    
     @classmethod
     def lcnz2lsz(cls, lcnz: List[List[float]], s_dag: List[SizedNode]) -> List[float]:
         """对各层，根据通道的非零占比计算出输出数据总元素个数"""
@@ -167,36 +166,36 @@ class Scheduler:
                     size += R * C
             lsz.append(size)
         return lsz
+    
+    @classmethod
+    def relucnz2lsz(cls, lcnz: Dict[int, List[float]], s_dag: List[SizedNode]) -> List[float]:
+        """对relu层，根据通道的非零占比计算出输出数据总元素个数"""
+        lsz = []
+        for l in range(len(s_dag)):
+            size = 0
+            try:
+                H, R, C = s_dag[l][0][-3:]
+            except:
+                R, C = s_dag[l][0][-2:]
+                H = 1
+            for c in range(H):
+                if l in lcnz and lcnz[l][0] < s_dag[l][1]:
+                    size += 2 * R * C * lcnz[l][0] + R + 1
+                else:
+                    size += R * C
+            lsz.append(size)
+        return lsz
 
     @classmethod
-    def elys2olys(cls, elys: List[int], dag: List[Node]) -> List[int]:
+    def elys2olys(cls, elys: List[int], layers: List[Node], node2index: Dict[Node, int]) -> List[int]:
         """执行elys这些层，应该给出哪些层的输出数据"""
         olys = []  # 输出层
         elyset = set(elys)
         for ly in elys:
             # 如果 ly没有后继 或者 有的后继不在elys中，那么就把ly加入到olys
-            if len(dag[ly].descendants) == 0 or any(ds not in elyset for ds in dag[ly].descendants):
+            if len(layers[ly].outputs) == 0 or any (node2index[onode] not in elyset for onodelist in layers[ly].outputs for onode in onodelist):
                 olys.append(ly)
         return olys
-
-    @classmethod
-    def _predict_dag(cls, node_id: int, res_lcnz: List[List[float]],
-                     dag: List[Node], predictors: List[Predictor]) -> None:
-        """模仿core.dag_dnn.DagDNN.__execute_dag
-        res_lcnz的每个元素必须初始化为空列表
-        """
-        if len(res_lcnz[node_id]) > 0:
-            return
-        acnz = []
-        for aid in dag[node_id].ancients:
-            if len(res_lcnz[aid]) > 0:
-                acnz.append(res_lcnz[aid])
-            else:
-                return
-        res_lcnz[node_id] = predictors[node_id].predict(acnz)
-        for d in dag[node_id].descendants:
-            cls._predict_dag(d, res_lcnz, dag, predictors)
-
 
 class G1Scheduler(Scheduler):
     """group_size为1的调度器，用于兼容以前写的Scheduler"""

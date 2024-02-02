@@ -13,8 +13,8 @@ from rpc.msg_pb2 import JobMsg
 class ItgJob(Job):
     """一个完整的可直接送入Executor的Job"""
 
-    def __init__(self, exec_ids: List[int], out_ids: List[int], node2index: Dict[Node, int], id2opt: Dict[int, Tensor]):
-        super().__init__(exec_ids, out_ids, node2index)
+    def __init__(self, exec_ids: List[int], out_ids: List[int], id2opt: Dict[int, Tensor]):
+        super().__init__(exec_ids, out_ids)
         self._id2opt = id2opt  # 先前完成的Job得到的输出，node_id->Tensor
 
     @property
@@ -45,7 +45,7 @@ class ExNode(Node):
 
     def init_inputs(self, output: Optional[Tensor]) -> None:
         """设置输入数据"""
-        self.inputs.append(output)
+        self.execute(output)
 
     def set_finished(self) -> None:
         self.outdegree -= 1
@@ -81,8 +81,8 @@ class ItgExecutor(Executor, Generic[T]):
     """执行一次inference中的一组CNN层。喂进输入，得到输出"""
     def __init__(self, dag_dnn: DagDNN, node_type: Type[T] = ExNode):
         super().__init__(dag_dnn, node_type)
-        layers_topo = dag_dnn.layers
-        self.__ex_dag = [node_type(node) for node in layers_topo]
+        self.node2index = dag_dnn.node2index
+        self.__ex_dag = [node_type(node) for node in dag_dnn.layers]
 
     def exec(self, job: ItgJob) -> Dict[int, Tensor]:
         """执行给定的Job，得到输出结果"""
@@ -93,23 +93,19 @@ class ItgExecutor(Executor, Generic[T]):
         for exec_id in job.exec_ids:
             inputs = []
             for inodelist in self.__ex_dag[exec_id].inputs:
-                if torch.is_tensor(inodelist):
-                    inputs.append(inodelist)
-                    self.__ex_dag[exec_id].inputs=[]
-                else:
-                    for node in inodelist:
-                        if node in job.node2index and self.__ex_dag[job.node2index[node]].get_output() is not None:
-                            inputs.append(self.__ex_dag[job.node2index[node]].get_output())
-                            self.__ex_dag[job.node2index[node]].set_finished()
+                for node in inodelist:
+                    if node in self.node2index and self.__ex_dag[self.node2index[node]].get_output() is not None:
+                        inputs.append(self.__ex_dag[self.node2index[node]].get_output())
+                        self.__ex_dag[self.node2index[node]].set_finished()
 
             self.__ex_dag[exec_id].execute(inputs[0] if len(inputs) == 1 else inputs)
             # 内存回收
             for inodelist in self.__ex_dag[exec_id].inputs:
                 for node in inodelist:
-                    if node in job.node2index:
+                    if node in self.node2index:
                         for outnodelist in node.outputs:
-                            if all(self.__ex_dag[job.node2index[outnode]].finished() for outnode in outnodelist):
-                                self.__ex_dag[job.node2index[node]].clear()
+                            if all(self.__ex_dag[self.node2index[outnode]].finished() for outnode in outnodelist):
+                                self.__ex_dag[self.node2index[node]].clear()
 
         out = {oid: self.__ex_dag[oid].get_output() for oid in job.out_ids}
         self.__reset()

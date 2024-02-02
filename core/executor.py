@@ -15,9 +15,8 @@ class Job:
     exec_ids: List[int]  # 要执行的这组CNN层的id，按照执行顺序排列
     out_ids: List[int]  # 这组CNN层中输出层的id
 
-    def __init__(self, exec_ids: List[int], out_ids: List[int], node2index: Dict[Node, int], id2data: Dict[int, Tensor] = None):
+    def __init__(self, exec_ids: List[int], out_ids: List[int], id2data: Dict[int, Tensor] = None):
         self.exec_ids, self.out_ids = exec_ids, out_ids
-        self.node2index = node2index
 
     @property
     @abstractmethod

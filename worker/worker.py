@@ -108,7 +108,7 @@ class Worker(Thread):
     def profile_dnn_cost(cls, dag_dnn: DagDNN, frame_size: Tuple[int, int], niter: int) -> List[float]:
         itg_extor = ItgExecutor(dag_dnn, cls._TimingExNode) # 用于计时的Executor
         ipt = torch.rand(1, 3, *frame_size) # 生成随机输入
-        job = ItgJob(list(range(len(dag_dnn.layers))), [len(dag_dnn.layers)-1], dag_dnn.node2index, {0: ipt}) # 生成工作序列
+        job = ItgJob(list(range(len(dag_dnn.layers))), [len(dag_dnn.layers)-1], {0: ipt}) # 生成工作序列
         layer_cost = [0 for _ in range(len(dag_dnn.layers))]
         for _ in tqdm.tqdm(range(niter)):
             itg_extor.exec(job)
