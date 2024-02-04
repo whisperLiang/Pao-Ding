@@ -25,7 +25,8 @@ net:
 # dnn_loader: !!python/name:dnn_models.chain.prepare_alexnet
 # dnn_loader: !!python/name:dnn_models.resnet.prepare_resnet50
 # dnn_loader: !!python/name:dnn_models.chain.prepare_vgg16
-dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet50
+# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet50
+dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_vgg16
 # Path of the input video file
 video_path: media/parking.mp4
 # Adjust the input frame to [nrow, ncol], which is a tuple of two int. None indicates don't resize.

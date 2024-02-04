@@ -498,7 +498,7 @@ def forward_ll(dpg, x, ignored_blocks=[]):
         node = queue.pop()
 
         # Step 4: Update the in-degree of neighbors and enqueue if in-degree becomes 0
-        for o_nodelist in node.outputs:
+        for index, o_nodelist in enumerate(node.outputs):
             if len(o_nodelist) > 1:
                 for ind in range(len(o_nodelist)-1):
                     if [o_nodelist[ind+1]] not in o_nodelist[ind].outputs:
@@ -508,6 +508,7 @@ def forward_ll(dpg, x, ignored_blocks=[]):
                     if [o_nodelist[ind]] not in o_nodelist[ind+1].inputs:
                         o_nodelist[ind+1].inputs.append([o_nodelist[ind]])
                         o_nodelist[ind+1].indegree += 1
+                node.outputs[index] = [o_nodelist[0]] # 更新输出节点列表
 
             for o_node in o_nodelist:
                 if o_node.name in ignored_blocks_node_list:
@@ -546,12 +547,15 @@ def forward_ll(dpg, x, ignored_blocks=[]):
         
         # 将输入按序传入到节点中
         x_ = []
-        for i_nodelist in node.inputs:
+        for index, i_nodelist in enumerate(node.inputs):
             if i_nodelist[-1].outdegree > 0:
                 if i_nodelist[-1].outresult is not None:
                     x_.append(i_nodelist[-1].outresult)
             else:
                 x_.append(x)
+            # 更新输入节点列表
+            if len(i_nodelist) > 1:
+                node.inputs[index] = [i_nodelist[-1]]
         x = node.forward(x_ if len(x_) > 1 else x)
 
         if isinstance(x, tuple) and isinstance(x[0], torchvision.models.detection.image_list.ImageList):
