@@ -43,9 +43,9 @@ class ExNode(Node):
         self.outdegree = self.fixedoutd # 判断何时将self.__finished设置为True
         self.__finished: bool = False  # 当前节点是否未完成
 
-    def init_inputs(self, output: Optional[Tensor]) -> None:
+    def init_inputs(self, data: Optional[Tensor]) -> None:
         """设置输入数据"""
-        self.execute(output)
+        self.inputs.append(data)
 
     def set_finished(self) -> None:
         self.outdegree -= 1
@@ -54,7 +54,6 @@ class ExNode(Node):
 
     def execute(self, inputs) -> None:
         """inputs为输入，执行并保存输出"""
-        assert self.outresult is None and not self.__finished, "output has been set!"
         with torch.no_grad():
             self.outresult = self.forward(inputs)
 
@@ -93,10 +92,14 @@ class ItgExecutor(Executor, Generic[T]):
         for exec_id in job.exec_ids:
             inputs = []
             for inodelist in self.__ex_dag[exec_id].inputs:
-                for node in inodelist:
-                    if node in self.node2index and self.__ex_dag[self.node2index[node]].get_output() is not None:
-                        inputs.append(self.__ex_dag[self.node2index[node]].get_output())
-                        self.__ex_dag[self.node2index[node]].set_finished()
+                if isinstance(inodelist, Tensor):
+                    inputs.append(inodelist)
+                    self.__ex_dag[exec_id].inputs.pop()
+                else:
+                    for node in inodelist:
+                        if node in self.node2index and self.__ex_dag[self.node2index[node]].get_output() is not None:
+                            inputs.append(self.__ex_dag[self.node2index[node]].get_output())
+                            self.__ex_dag[self.node2index[node]].set_finished()
 
             self.__ex_dag[exec_id].execute(inputs[0] if len(inputs) == 1 else inputs)
             # 内存回收
@@ -117,8 +120,8 @@ class ItgExecutor(Executor, Generic[T]):
     def __init_job(self, job: ItgJob) -> None:
         """为job初始化：设置输入数据，并将输入节点的所有前驱标记为finished"""
         # 设置输入节点的数据
-        for node_id, output in job.id2data.items():
-            self.__ex_dag[node_id].init_inputs(output)
+        for node_id, data in job.id2data.items():
+            self.__ex_dag[node_id].init_inputs(data)
 
     def __reset(self) -> None:
         """重置所有Node的状态"""
