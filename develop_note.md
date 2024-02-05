@@ -57,3 +57,7 @@
 - [x] 实现了predictors only for relu, 三种拟合方式
 ## 2024.2.2
 - [x] 实现了master for cross cloud ladder，相对于原始resmap，可以支持DAG格式的调度
+## 2024.2.4
+- [x] 消除共用梯度引起Trainer出bug的问题
+## 2024.2.5
+- [x] 树莓派与服务器协同测试成功
