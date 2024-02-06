@@ -8,7 +8,7 @@
             "name": "Debug Worker0",
             "type": "python",
             "request": "launch",
-            "program": "D:/ProgramCode/Cross-Cloud-Ladder/main.py",
+            "program": "/home/fengyun/whisperliang/Cross-Cloud-Ladder/main.py",
             "args": ["worker", "--config", "config.yml", "--id", "0"],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -17,7 +17,7 @@
             "name": "Debug Worker1",
             "type": "python",
             "request": "launch",
-            "program": "D:/ProgramCode/Cross-Cloud-Ladder/main.py",
+            "program": "/home/fengyun/whisperliang/Cross-Cloud-Ladder/main.py",
             "args": ["worker", "--config", "config.yml", "--id", "1"],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -26,7 +26,7 @@
             "name": "Debug Trainer",
             "type": "python",
             "request": "launch",
-            "program": "D:/ProgramCode/Cross-Cloud-Ladder/main.py",
+            "program": "/home/fengyun/whisperliang/Cross-Cloud-Ladder/main.py",
             "args": ["trainer", "--config", "config.yml"],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -35,7 +35,7 @@
             "name": "Debug Master",
             "type": "python",
             "request": "launch",
-            "program": "D:/ProgramCode/Cross-Cloud-Ladder/main.py",
+            "program": "/home/fengyun/whisperliang/Cross-Cloud-Ladder/main.py",
             "args": ["master", "--config", "config.yml"],
             "console": "integratedTerminal",
             "justMyCode": true

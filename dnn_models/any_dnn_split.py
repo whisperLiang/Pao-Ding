@@ -33,6 +33,11 @@ def prepare_resnet50() -> DependencyGraph:
     example_inputs = randn(1,3,224,224)
     return prepare_split_model(example_inputs, resnet50)
 
+def prepare_googlenet() -> DependencyGraph:
+    googlenet = models.googlenet(True)
+    googlenet.eval()
+    example_inputs = randn(1, 3, 224, 224)
+    return prepare_split_model(example_inputs, googlenet)
 
 if __name__ == '__main__':
     layer_topo = prepare_vgg16()
