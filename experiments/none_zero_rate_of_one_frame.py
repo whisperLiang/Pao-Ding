@@ -8,11 +8,9 @@ from matplotlib import pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.ticker import MaxNLocator
 
-from core.dnn_config import RawLayer
-from core.raw_dnn import RawDNN
-from dnn_models.chain import prepare_alexnet, prepare_vgg16
-from dnn_models.googlenet import prepare_googlenet
-from dnn_models.resnet import prepare_resnet50
+from core.dag_dnn import DagDNN
+from model_split import Node
+from dnn_models.any_dnn_split import prepare_alexnet, prepare_vgg16, prepare_resnet50, prepare_googlenet
 import numpy as np
 plt.rc('font',family='Times New Roman')
 import statsmodels.api as sm # recommended import according to the docs
@@ -31,7 +29,7 @@ def lfcnz2lfnz(lfcnz: List[List[List[float]]]) -> List[List[float]]:
     return [[sum(cnz)/len(cnz) for cnz in fcnz] for fcnz in lfcnz]
 
 
-def frame_seq(r_layers: List[RawLayer], lfnz: List[List[float]], thres: float = .495):
+def frame_seq(r_layers: List[Node], lfnz: List[List[float]], thres: float = .495):
     """点的颜色表示该帧在视频中所处位置，thres为稀疏阈值"""
     nlayer = len(lfnz)  # 层数
     nframe = len(lfnz[0])  # 帧数
@@ -64,7 +62,7 @@ def hist_cdf(data,bins=10,range=None):
       cdf = np.cumsum(hist)/len(data)
       return cdf,bin_edges
 
-def heatmap(r_layers: List[RawLayer], lfnz: List[List[float]], thres: float = .495):
+def heatmap(r_layers: List[Node], lfnz: List[List[float]], thres: float = .495):
     """点的颜色表示这个稀疏率出现次数，thres为稀疏阈值"""
     nlayer = len(lfnz)  # 层数
     nframe = len(lfnz[0])  # 帧数
@@ -99,18 +97,18 @@ def heatmap(r_layers: List[RawLayer], lfnz: List[List[float]], thres: float = .4
     plt.show()
 
 def generate_data(CNN_NAME,ORIGINAL):
-    VIDEO_NAME = 'road'  # road, campus, parking
+    VIDEO_NAME = 'parking'  # road, campus, parking
     RESOLUTION = '480x720'  # 数据集的分辨率
     NFRAME_TOTAL = 400  # 数据集中的帧数
     NFRAME_SHOW = 400  # 展示数据集中的多少帧
     suffix = ('o_' if ORIGINAL else '') + 'lfcnz'
     file_name = f".cache/{CNN_NAME}.{VIDEO_NAME}.{RESOLUTION}.{NFRAME_TOTAL}.{suffix}"
-    cnn_loaders = {'ax': prepare_alexnet,
-                   'vg16': prepare_vgg16,
-                   'gn': prepare_googlenet,
-                   'rs50': prepare_resnet50}
-    raw_dnn = RawDNN(cnn_loaders[CNN_NAME]())
-    r_layers = raw_dnn.layers
+    cnn_loaders = {'AlexNet': prepare_alexnet,
+                   'VGG': prepare_vgg16,
+                   'GoogLeNet': prepare_googlenet,
+                   'ResNet': prepare_resnet50}
+    dag_dnn = DagDNN(cnn_loaders[CNN_NAME]())
+    r_layers = dag_dnn.layers
     with open(file_name, 'rb') as f:
         lfcnz = pickle.load(f)
     lfcnz = [fcnz[:NFRAME_SHOW] for fcnz in lfcnz]
@@ -131,12 +129,12 @@ def generate_data(CNN_NAME,ORIGINAL):
     return x,y,xedges,yedges,nlayer,nframe,sps_cnt
 
 if __name__ == '__main__':
-    CNN_NAME = 'ax'  #ax, vg16, gn, rs50
+    CNN_NAME = 'AlexNet'  #AlexNet, VGG, GoogLeNet, ResNet
     ORIGINAL = True  # False为差值数据LFCNZ，True为原始数据OLFCNZ
-    x_ax, y_ax, xedges_ax, yedges_ax, nlayer_ax, nframe_ax, sps_cnt_ax= generate_data('ax', ORIGINAL)
-    x_vgg, y_vgg, xedges_vgg, yedges_vgg, nlayer_vgg, nframe_vgg, sps_cnt_vgg = generate_data('vg16', ORIGINAL)
-    x_gn, y_gn, xedges_gn, yedges_gn, nlayer_gn, nframe_gn, sps_cnt_gn = generate_data('gn', ORIGINAL)
-    x_res, y_res, xedges_res, yedges_res, nlayer_res, nframe_res, sps_cnt_res = generate_data('rs50', ORIGINAL)
+    x_ax, y_ax, xedges_ax, yedges_ax, nlayer_ax, nframe_ax, sps_cnt_ax= generate_data('AlexNet', ORIGINAL)
+    x_vgg, y_vgg, xedges_vgg, yedges_vgg, nlayer_vgg, nframe_vgg, sps_cnt_vgg = generate_data('VGG', ORIGINAL)
+    x_gn, y_gn, xedges_gn, yedges_gn, nlayer_gn, nframe_gn, sps_cnt_gn = generate_data('GoogLeNet', ORIGINAL)
+    x_res, y_res, xedges_res, yedges_res, nlayer_res, nframe_res, sps_cnt_res = generate_data('ResNet', ORIGINAL)
     plt.figure(figsize=(6, 5))
 
     plt.subplot(221)
