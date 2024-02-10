@@ -9,7 +9,7 @@ from core.executor import Job
 from model_split import Node
 from core.ifr import IFR, WkJob
 from core.predictor import NZPred
-from master.scheduler import SizedNode, Scheduler
+from master.scheduler import Scheduler
 from schedulers.metric import LatencyMetric, Metric
 
 
