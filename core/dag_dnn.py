@@ -2,7 +2,7 @@ import logging
 import sys
 
 import torch
-from typing import List, Any, Dict, Type
+from typing import List, Any, Dict, Type, Tuple
 from core.predictor import Predictor, MLPPredictor, LNRreluPredictor, MLPsPredictor
 
 from torch import Tensor
@@ -39,7 +39,7 @@ class DagDNN:
         return self.__execute_dag(self.layers, ipt, [None for _ in self.layers], self.node2index)
     
     @classmethod
-    def _make_layerstopo(cls, dpg: DependencyGraph, x: Tensor, ignored_blocks=[], logger: logging.Logger = None) -> (Dict[Node, int], List[Node]):
+    def _make_layerstopo(cls, dpg: DependencyGraph, x: Tensor, ignored_blocks=[], logger: logging.Logger = None) -> Tuple[Dict[Node, int], List[Node]]:
         """根据依赖图，生成层拓扑排序结构
         :param dpg 要处理的依赖图
         :param x 用于生成层次拓扑结构的输入
