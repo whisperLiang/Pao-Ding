@@ -65,3 +65,6 @@
 - [x] [实验] none_zero_rate_of_one_frame.py：原始特征非零率显示成功
 - [x] [实验] none_zero_of_two_frames.py：残差特征非零率显示成功
 - [x] [实验] lcnz_show.py: 各层各通道非零率显示成功
+## 2024.2.16
+- [x] [实验] none_zero_rate_of_one_rlmx.py：原始特征非零率 for relu and maxpool 显示成功
+- [x] [实验] none_zero_of_two_rlmx.py：残差特征非零率 for relu and maxpool 显示成功
