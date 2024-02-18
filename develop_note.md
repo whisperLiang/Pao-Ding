@@ -70,3 +70,6 @@
 - [x] [实验] none_zero_of_two_rlmx.py：残差特征非零率 for relu and maxpool 显示成功
 ## 2024.2.17
 - [x] [实验] relu_layer_fit_nonezero_rate.py：relu层中间特征残差log拟合成功
+## 2024.2.18
+- [x] 实现了predictors only for relu, log拟合
+- [x] 实现了通过预测的非零率计算实际传输的数据量 
