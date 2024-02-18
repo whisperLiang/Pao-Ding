@@ -3,7 +3,7 @@ import sys
 
 import torch
 from typing import List, Any, Dict, Type, Tuple
-from core.predictor import Predictor, MLPPredictor, LNRreluPredictor, MLPsPredictor
+from core.predictor import Predictor, LOGreluPredictor
 
 from torch import Tensor
 from torch.nn import Module
@@ -31,7 +31,7 @@ class DagDNN:
         # ToDo: 生成DAG可视化图
         # self.__visualize_dag(self.layers, f"{self.model_name}_strucure.html")
         self.mdl2pred: Dict[Type[Module], Type[Predictor]] \
-        = {torch.nn.ReLU: LNRreluPredictor}
+        = {torch.nn.ReLU: LOGreluPredictor}
         self.logger.info(f"The DAG of DNN has {len(self.layers)} layers, "
                          f"visualized in {self.model_name}_strucure.html")
 

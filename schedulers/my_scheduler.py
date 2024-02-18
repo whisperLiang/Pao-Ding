@@ -60,7 +60,8 @@ class MyScheduler(Scheduler):
         # 所以这里直接使用平均值作为原始数据的非零率，进而计算原始数据大小
         org_gp_lbsz = [self.__o_lbsz for ipt in ipt_group]
         self.__logger.info(f"start predicting...")
-        dif_gp_lbsz = [Scheduler.dif2lbsz(dif, self.__sdag, self.__predictors) for dif in dif_group]
+        # 中间特征残差数据传输量
+        dif_gp_lbsz = [Scheduler.dif2lbsz(dif, self.__sdag, self.__predictors, org_gp_lbsz[ind]) for ind, dif in enumerate(dif_group)]
         metric = LatencyMetric(self.__ly_comp, self.__wk_cap, self.__wk_bwth,
                                self.__pre_wk_ilys, org_gp_lbsz, dif_gp_lbsz, s_ready)
         opt_wk_elys, opt_cost = self.recur_find_chain([], metric)

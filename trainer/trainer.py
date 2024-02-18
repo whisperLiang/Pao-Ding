@@ -43,7 +43,7 @@ class Trainer(Thread):
         lfcnz = cached_func(data_name + '.lfcnz', self.collect_lfcnz, self.__dag_dnn, self.__video_path,
                             self.__frame_num, self.__frame_size, logger=self.__logger)
         self.__logger.info("training predictors...")
-        predictors = cached_func(data_name + '.pred', self.train_relupredictors,
+        predictors = cached_func(data_name + '.pred', self.train_logrelupredictors,
                                  self.__dag_dnn, lfcnz, logger=self.__logger)
         self.__logger.info("train finished, predictors are ready")
         with self.__cv:
@@ -98,37 +98,61 @@ class Trainer(Thread):
                 lfcnz[l].append(lcnz[l])
             lst_results = cur_results
         return lfcnz
-
-    @classmethod
-    def train_predictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
-        predictors = {}
-        for l in tqdm.tqdm(range(len(dag_dnn.layers))):
-            layer = dag_dnn.layers[l]
-            layer_type = layer.module.__class__
-            if layer_type in dag_dnn.mdl2pred:
-                predictor = dag_dnn.mdl2pred[layer_type](layer.module)
-                afcnz = []
-                for inodelist in layer.inputs:
-                    for node in inodelist:
-                        if node in dag_dnn.node2index:
-                            afcnz.append(lfcnz[dag_dnn.node2index[node]])
-
-                predictor.fit(afcnz, lfcnz[l])
-                predictors[l] = predictor
-        return predictors
     
-    def train_relupredictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
+    @classmethod
+    def _lfcnz2lfnz(cls, lfcnz: List[List[List[float]]]) -> List[List[float]]:
+        """对于每个层的输出数据，把各通道的非零占比合并成整体非零占比"""
+        return [[sum(cnz)/len(cnz) for cnz in fcnz] for fcnz in lfcnz]
+
+    # @classmethod
+    # def train_predictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
+    #     predictors = {}
+    #     for l in tqdm.tqdm(range(len(dag_dnn.layers))):
+    #         layer = dag_dnn.layers[l]
+    #         layer_type = layer.module.__class__
+    #         if layer_type in dag_dnn.mdl2pred:
+    #             predictor = dag_dnn.mdl2pred[layer_type](layer.module)
+    #             afcnz = []
+    #             for inodelist in layer.inputs:
+    #                 for node in inodelist:
+    #                     if node in dag_dnn.node2index:
+    #                         afcnz.append(lfcnz[dag_dnn.node2index[node]])
+
+    #             predictor.fit(afcnz, lfcnz[l])
+    #             predictors[l] = predictor
+    #     return predictors
+    
+    # @classmethod
+    # def train_relupredictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
+    #     """
+    #     根据原始图片的残差非零率预测Relu层残差非零率
+    #     """
+    #     predictors = {}
+    #     for l in tqdm.tqdm(range(len(dag_dnn.layers))):
+    #         layer = dag_dnn.layers[l]
+    #         layer_type = layer.module.__class__
+    #         if layer_type in dag_dnn.mdl2pred:
+    #             predictor = dag_dnn.mdl2pred[layer_type](layer.module)
+    #             predictor.fit([lfcnz[0]], lfcnz[l])
+    #             predictors[l] = predictor
+    #     return predictors
+    
+    @classmethod
+    def train_logrelupredictors(cls, dag_dnn: DagDNN, lfcnz: List[List[List[float]]]) -> Dict[int, Predictor]:
         """
         根据原始图片的残差非零率预测Relu层残差非零率
         """
         predictors = {}
+        arelu_l = 0
+        lfnz = cls._lfcnz2lfnz(lfcnz)
         for l in tqdm.tqdm(range(len(dag_dnn.layers))):
             layer = dag_dnn.layers[l]
             layer_type = layer.module.__class__
             if layer_type in dag_dnn.mdl2pred:
                 predictor = dag_dnn.mdl2pred[layer_type](layer.module)
-                predictor.fit([lfcnz[0]], lfcnz[l])
+                predictor.fit(lfnz[arelu_l], lfnz[l])
                 predictors[l] = predictor
+                arelu_l = l
         return predictors
 
     @classmethod

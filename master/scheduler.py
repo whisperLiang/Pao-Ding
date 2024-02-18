@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple, Dict, Any, Type
 
 import torch
 from torch import Tensor
+from numpy import mean
 
 from core.executor import Job
 from model_split import Node
@@ -130,60 +131,67 @@ class Scheduler:
         return wk_layers
 
     @classmethod
-    def dif2lbsz(cls, dif_ipt: Tensor, s_dag: List[SizedNode], predictors: List[Predictor]):
+    def dif2lbsz(cls, dif_ipt: Tensor, s_dag: List[SizedNode], predictors: Dict[int, Predictor], one_org_gp_lbsz: List[float]):
         """根据输入差值，估计各层输出差值的数据量
         :return 各层的差值数据量lbsz
         """
         cnz = [float(chan.count_nonzero() / chan.nelement()) for chan in dif_ipt[0]]
-        lcnz = cls.predict_dag(cnz, s_dag, predictors)
-        lsz = cls.relucnz2lsz(lcnz, s_dag)
-        return [sz * 4 for sz in lsz]
+        nz = mean(cnz)
+        lnz = cls.predict_dag(nz, s_dag, predictors)
+        lsz = cls.relucnz2lsz(lnz, s_dag, one_org_gp_lbsz)
+        return lsz
 
     @classmethod
-    def predict_dag(cls, ipt_cnz: List[float], dag: List[Node], predictors: List[Predictor]) -> List[List[float]]:
+    def predict_dag(cls, ipt_nz: float, dag: List[Node], predictors: Dict[int, Predictor]) -> Dict[int, float]:
         """根据输入数据与上一帧的非零占比，预测DAG各个节点输出数据与上一帧的非零占比"""
         relu_nzs = {}  # 记录Relu层的非零率
         for lid, relu_pred in predictors.items():
-            relu_nzs[lid] = relu_pred.predict(ipt_cnz)
+            relu_nzs[lid] = relu_pred.predict(ipt_nz)
         return relu_nzs
     
     @classmethod
     def lcnz2lsz(cls, lcnz: List[List[float]], s_dag: List[SizedNode]) -> List[float]:
-        """对各层，根据通道的非零占比计算出输出数据总元素个数"""
+        """对各层，根据通道的非零占比计算出输出数据总元素个数，原始中间特征"""
         lsz = []
         for l in range(len(s_dag)):
             size = 0
             try:
                 H, R, C = s_dag[l][0][-3:]
+                for c in range(H):
+                    p = lcnz[l][c]
+                    if p < s_dag[l][1]:
+                        size += 2 * R * C * p + R + 1
+                    else:
+                        size += R * C
             except:
                 R, C = s_dag[l][0][-2:]
                 H = 1
-            for c in range(H):
-                p = lcnz[l][c]
+                count_non_zero = float(sum(1 for i in lcnz[l] if i != 0))
+                p = count_non_zero / len(lcnz[l])
                 if p < s_dag[l][1]:
                     size += 2 * R * C * p + R + 1
-                else:
+                else :
                     size += R * C
             lsz.append(size)
         return lsz
     
     @classmethod
-    def relucnz2lsz(cls, lcnz: Dict[int, List[float]], s_dag: List[SizedNode]) -> List[float]:
-        """对relu层，根据通道的非零占比计算出输出数据总元素个数"""
+    def relucnz2lsz(cls, lnz: Dict[int, float], s_dag: List[SizedNode], one_org_gp_lbsz: List[float]) -> List[float]:
+        """对relu层，根据通道的非零占比计算出输出数据总元素个数，ReLU层中间特征残差大小"""
         lsz = []
-        for l in range(len(s_dag)):
-            size = 0
-            try:
-                H, R, C = s_dag[l][0][-3:]
-            except:
-                R, C = s_dag[l][0][-2:]
-                H = 1
-            for c in range(H):
-                if l in lcnz and lcnz[l][0] < s_dag[l][1]:
-                    size += 2 * R * C * lcnz[l][0] + R + 1
-                else:
-                    size += R * C
-            lsz.append(size)
+        for l in range(len(one_org_gp_lbsz)):
+            if l in lnz and lnz[l] < s_dag[l][1]:
+                size = 0
+                try:
+                    H, R, C = s_dag[l][0][-3:]
+                except:
+                    R, C = s_dag[l][0][-2:]
+                    H = 1 
+                for c in range(H):
+                    size += 2 * R * C * lnz[l] + R + 1
+                lsz.append(size*4)
+            else:
+                lsz.append(one_org_gp_lbsz[l])          
         return lsz
 
     @classmethod
