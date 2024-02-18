@@ -22,8 +22,8 @@ class LBScheduler(G1Scheduler):
         self.__ly_comp = ly_comp
         self.__layers = layers
         self.__node2index = node2index
-        wk_lynum = self.split_chain(self.__ly_comp[1:], self.__wk_cap)  # 第0层不需要执行
-        self.__lb_wk_elys = self.wk_lynum2layers_chain(1, wk_lynum)
+        wk_lynum = self.split_chain(self.__ly_comp[0:], self.__wk_cap)  # 第0层不需要执行
+        self.__lb_wk_elys = self.wk_lynum2layers_chain(0, wk_lynum)
         self.__logger.info(f"elys={self.__lb_wk_elys}")
         self.__lb_wk_olys = [self.elys2olys(elys, self.__layers, self.__node2index) for elys in self.__lb_wk_elys]
         self.__logger.info(f"olys={self.__lb_wk_olys}")
