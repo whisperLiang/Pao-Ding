@@ -32,12 +32,23 @@ def tensor2msg(tensor4d: Tensor, sparse: bool = True) -> Arr3dMsg:
         for mtrx2d in tensor4d.numpy()[0]:
             arr3d.arr2ds.add(sparse=False, data=pickle.dumps(mtrx2d))
         return arr3d
-    if tensor4d.shape[2] > tensor4d.shape[3]:  # 行数>列数时，应该用CSC
-        logger = logging.getLogger('tensor2msg')
-        logger.warning(f"shape={tensor4d.shape}. nrow>ncol, CSC is recommended, instead of CSR!")
-    arr3d = Arr3dMsg()
-    for mtrx2d in tensor4d.numpy()[0]:
+    if len(tensor4d.shape) == 4:
+        if tensor4d.shape[2] > tensor4d.shape[3]:  # 行数>列数时，应该用CSC
+            logger = logging.getLogger('tensor2msg')
+            logger.warning(f"shape={tensor4d.shape}. nrow>ncol, CSC is recommended, instead of CSR!")
+        arr3d = Arr3dMsg()
+        for mtrx2d in tensor4d.numpy()[0]:
+            arr2d = Arr2dMsg()
+            arr2d.sparse = (np.count_nonzero(mtrx2d)*2+mtrx2d.shape[0]+1 < mtrx2d.size)
+            if arr2d.sparse:
+                arr2d.data = pickle.dumps(csr_matrix(mtrx2d))
+            else:
+                arr2d.data = pickle.dumps(mtrx2d)
+            arr3d.arr2ds.append(arr2d)
+    else:
+        arr3d = Arr3dMsg()
         arr2d = Arr2dMsg()
+        mtrx2d = tensor4d.numpy()
         arr2d.sparse = (np.count_nonzero(mtrx2d)*2+mtrx2d.shape[0]+1 < mtrx2d.size)
         if arr2d.sparse:
             arr2d.data = pickle.dumps(csr_matrix(mtrx2d))
