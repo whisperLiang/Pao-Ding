@@ -72,4 +72,8 @@
 - [x] [实验] relu_layer_fit_nonezero_rate.py：relu层中间特征残差log拟合成功
 ## 2024.2.18
 - [x] 实现了predictors only for relu, log拟合
-- [x] 实现了通过预测的非零率计算实际传输的数据量 
+- [x] 实现了通过预测的非零率计算实际传输的数据量
+## 2024.2.19
+- [x] [实验] pipeline_execution_result.py用于流水线并行结果显示
+- [x] update util.py解决了少于三维的特征编码
+- [x] update itg_executor.py,ls_sheduler.py,my_sheduler对于DAG格式有多层数据需要进行编码传输出错的解决
