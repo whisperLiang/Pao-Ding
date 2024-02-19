@@ -104,7 +104,7 @@ class MyScheduler(Scheduler):
         last_ly = max((ly for lys in wk_elys for ly in lys), default=0)  # 当前Worker前已经完成的层
         if worker_id == wk_num-1:  # 当前要分配的是最后一个Worker
             # 最后一个Worker必须完成区间(last_ly, ly_num)的所有层
-            wk_elys.append(list(range(last_ly, ly_num)))
+            wk_elys.append(list(range(last_ly+1, ly_num)))
             cost = metric([wk_elys]*metric.gp_size())
             res = copy.deepcopy(wk_elys)
             wk_elys.pop()
@@ -112,7 +112,7 @@ class MyScheduler(Scheduler):
         opt_wk_elys, opt_cost = [], float('inf')
         # my_last: 当前Worker完成之后，已经完成的层
         for my_last in range(last_ly, ly_num):  # last_ly表示当前Worker什么都没做，ly_num-1表示完成了剩余所有层
-            wk_elys.append(list(range(last_ly, my_last)))
+            wk_elys.append(list(range(last_ly+1, my_last+1)))
             cad_wk_elys, cad_cost = cls.recur_find_chain(wk_elys, metric)
             wk_elys.pop()
             if cad_cost < opt_cost:

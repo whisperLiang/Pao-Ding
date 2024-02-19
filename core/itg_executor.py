@@ -45,11 +45,12 @@ class ExNode(Node):
 
     def init_inputs(self, data: Optional[Tensor]) -> None:
         """设置输入数据"""
-        self.inputs.append(data)
+        # self.inputs.append(data)
+        self.outresult = data
 
     def set_finished(self) -> None:
         self.outdegree -= 1
-        if self.outdegree == 0:
+        if self.outdegree <= 0:
             self.__finished = True
 
     def execute(self, inputs) -> None:
@@ -90,6 +91,13 @@ class ItgExecutor(Executor, Generic[T]):
         self.__init_job(job)
         # 执行job，获取输出
         for exec_id in job.exec_ids:
+            # if len(inputs) > 0:
+            #     self.__ex_dag[exec_id].execute(inputs[0] if len(inputs) == 1 else inputs)
+            #     inputs = []
+            #     continue
+            if self.__ex_dag[exec_id].get_output() is not None:
+                self.__ex_dag[exec_id].execute(self.__ex_dag[exec_id].get_output())
+                continue            
             inputs = []
             for inodelist in self.__ex_dag[exec_id].inputs:
                 if isinstance(inodelist, Tensor):
@@ -102,13 +110,16 @@ class ItgExecutor(Executor, Generic[T]):
                             self.__ex_dag[self.node2index[node]].set_finished()
 
             self.__ex_dag[exec_id].execute(inputs[0] if len(inputs) == 1 else inputs)
+            # inputs = []
             # 内存回收
             for inodelist in self.__ex_dag[exec_id].inputs:
                 for node in inodelist:
                     if node in self.node2index:
-                        for outnodelist in node.outputs:
-                            if all(self.__ex_dag[self.node2index[outnode]].finished() for outnode in outnodelist):
-                                self.__ex_dag[self.node2index[node]].clear()
+                        if self.__ex_dag[self.node2index[node]].finished():
+                            self.__ex_dag[self.node2index[node]].clear()
+                        # for outnodelist in node.outputs:
+                        #     if all(self.__ex_dag[self.node2index[outnode]].finished() for outnode in outnodelist):
+                        #         self.__ex_dag[self.node2index[node]].clear()
 
         out = {oid: self.__ex_dag[oid].get_output() for oid in job.out_ids}
         self.__reset()
@@ -122,6 +133,10 @@ class ItgExecutor(Executor, Generic[T]):
         # 设置输入节点的数据
         for node_id, data in job.id2data.items():
             self.__ex_dag[node_id].init_inputs(data)
+        # inputs = []
+        # for _, data in job.id2data.items():
+        #     inputs.append(data)
+        # return inputs
 
     def __reset(self) -> None:
         """重置所有Node的状态"""
