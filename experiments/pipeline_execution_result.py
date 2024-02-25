@@ -183,7 +183,12 @@ def show_ifr_records(ifr_records: List[IFRRecord], trds: List[str], xlim: int = 
     # plt.quiver(142, 5.92, 1, 0, color='navy', scale=20, width=0.005)
     # plt.text(152, 6.1, 'Tr.', fontsize=13, )
     plt.tight_layout()
-    plt.show()
+
+    # 用于直接显示图片，手动保存
+    # plt.show()
+
+    # 根据文件夹名保存图片，bbox_inches='tight'表示保存图片时不留白
+    plt.savefig(f'{folder_name}.png', bbox_inches='tight', pad_inches=0)
 
 #Stage('w1->':transmit,s='2022-01-28 12:13:31.471',f='2022-01-28 12:13:31.473')
 
@@ -199,6 +204,26 @@ def read_from_zip(zip_name: str) -> Tuple[List[List[Event]], List[List[List[Even
             with tczip.open(f'worker{wk}.tc') as w_tcfile:
                 w_i_evts.append(read_events(TextIOWrapper(w_tcfile), len(mi_evts)))
         return mi_evts, w_i_evts
+    
+def read_from_folder(folder_name: str) -> Tuple[List[List[Event]], List[List[List[Event]]]]:
+    """从指定的文件夹中读取mi_evts, w_i_evts"""
+    files = os.listdir(folder_name)
+    # 找到master.tc文件
+    master_file = [file for file in files if file == 'master.tc'][0]
+    # 从master.tc读取mi_evts
+    with open(os.path.join(folder_name, master_file), 'r') as m_tcfile:
+        mi_evts = read_events(m_tcfile)
+    
+    w_i_evts = []
+    # 找到worker*.tc文件并逐个读取
+    for file in files:
+        if file.startswith('worker') and file.endswith('.tc'):
+            with open(os.path.join(folder_name, file), 'r') as w_tcfile:
+                w_i_evts.append(read_events(w_tcfile, len(mi_evts)))
+    
+    return mi_evts, w_i_evts
+
+
 
 
 
@@ -212,10 +237,14 @@ if __name__ == '__main__':
     XLIM = None  # 横轴的最大时间, None为matplotlib自动决定, 非None时最小时间也会设置为0
     LOCAL_DIR = 'lbc2'  # l模式下, 本地目录路径
     REMOTE_CFG = 'device.yml'  # 远程服务器的配置文件
-    TCZIP = 'plbs_vgg_parking.zip'  # 从zip文件中读取tc文件
+    folder_name = 'itg_resnet'
 
+    # TCZIP = './Pipeline_Execution_result/itg_alexnet.zip'  # 从zip文件中读取tc文件
+    # g_mi_evts, g_w_i_evts = read_from_zip(TCZIP)
 
-    g_mi_evts, g_w_i_evts = read_from_zip(TCZIP)
+    TCFOLDER = f'./Pipeline_Execution_result/{folder_name}'  # 从文件夹中读取tc文件
+    g_mi_evts, g_w_i_evts = read_from_folder(TCFOLDER)
+
     print(f"events read succeeded, n_worker={len(g_w_i_evts)}, n_ifr={len(g_mi_evts)}")
 
     TRD2ACTS = {r'$m\rightarrow$': ['encode', 'transmit']}
