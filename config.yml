@@ -18,14 +18,17 @@ net:
   # w0->w1: '192.168.0.121:33321'
   m->t: '192.168.0.204:22210'
   m->w0: '192.168.0.113:33320'
-  m->w1: '192.168.0.27:33321'
-  w0->w1: '192.168.0.27:33321'
+  m->w1: '192.168.0.114:33321'
+  w0->w1: '192.168.0.114:33321'
 
 # DNN load function, use this to choose dnn
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_alexnet
-dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_vgg16
-# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet50
+# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_vgg16
+# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet18
+dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet50
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_googlenet
+# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_regnet
+# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_inception_v3
 # Path of the input video file
 video_path: media/parking.mp4
 # Adjust the input frame to [nrow, ncol], which is a tuple of two int. None indicates don't resize.
@@ -44,6 +47,7 @@ master:
   # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
   bandwidth: [3, 3]
   scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
+  # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
   LBScheduler:
   MyScheduler:
     gp_size: 3  # The number of frames a group contains. A group of frames will use the same scheduling policy
