@@ -41,22 +41,22 @@
 ## 2024.1.14
 - [x] 阅读了KDD21年顶会论文代码，准备复现。https://github.com/whisperLiang/Auto-Split
 ## 2024.1.21
-- [x] Auto-Split并不适合无损协同推理，设计很多无关的量化知识，放弃
+- [x] Auto-Split并不适合无损协同推理，涉及很多无关的量化知识，放弃
 - [x] 复现了DADS，代码太过简单，不能支持视频流等复杂实验。：https://github.com/Tjyy-1223/DADS
 ## 2024.1.24
 - [x] 复现了ResMap，调度策略在遇到resnet这种dag格式时报错，提交了issues。https://github.com/nju-cn/ResMap
 ## 2024.1.28
-- [x] 实现了worker for cross cloud ladder,基于VGG自动提取的DAG计算图拓扑排序实现
+- [x] 实现了worker for Pao-Ding,基于VGG自动提取的计算图拓扑排序实现
 ## 2024.1.29
-- [x] 实现了worker for cross cloud ladder,基于resnet50自动提取的DAG计算图拓扑排序实现
+- [x] 实现了worker for Pao-Ding,基于resnet50自动提取的DAG计算图拓扑排序实现
 ## 2024.1.30
-- [x] 实现了trainer for cross cloud ladder
+- [x] 实现了trainer for Pao-Ding
 ## 2024.2.1
 - [x] 在层拓扑排序中添加了输入节点
 - [x] 成功实现了scheduler的初始化
 - [x] 实现了predictors only for relu, 三种拟合方式
 ## 2024.2.2
-- [x] 实现了master for cross cloud ladder，相对于原始resmap，可以支持DAG格式的调度
+- [x] 实现了master for Pao-Ding，相对于原始resmap，可以支持DAG格式的调度
 ## 2024.2.4
 - [x] 消除共用梯度引起Trainer出bug的问题
 ## 2024.2.5
@@ -77,3 +77,5 @@
 - [x] [实验] pipeline_execution_result.py用于流水线并行结果显示
 - [x] update util.py解决了少于三维的特征编码
 - [x] update itg_executor.py,ls_sheduler.py,my_sheduler对于DAG格式有多层数据需要进行编码传输出错的解决
+## 2024.2.20
+- [x] [实验] pipeline_execution_result.py从文件夹读取数据，并不留白保存
