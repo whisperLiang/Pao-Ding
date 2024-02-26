@@ -79,3 +79,5 @@
 - [x] update itg_executor.py,ls_sheduler.py,my_sheduler对于DAG格式有多层数据需要进行编码传输出错的解决
 ## 2024.2.20
 - [x] [实验] pipeline_execution_result.py从文件夹读取数据，并不留白保存
+## 2024.2.21
+- [x] [实验] transmission_estimation.py从文件夹读取数据，显示w0到w1阶段的中间特征传输时间
