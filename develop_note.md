@@ -83,4 +83,4 @@
 - [x] [实验] transmission_estimation.py从文件夹读取数据，显示w0到w1阶段的中间特征传输时间
 ## 2024.2.28
 - [x] [实验] 解决由于未导入预训练权重，使得非零率估计不准的bug。any_dnn_split.py导入模型时必须加载预训练权重，使得结果不会随机
-- [x] 发现ResMap并不要求完整的推理结果，它只处理到最后能处理的层，以Conv、ReLU或者MaxPool结束。具体可以通过调试train.py，在collect_olfcnz函数中第69行opts设置断点，观察opts最后一层输出维度。
+- [x] 发现ResMap并不要求完整的推理结果，它只处理到最后能处理的层，以Conv、ReLU或者MaxPool结束。具体可以通过调试train.py，在collect_olfcnz函数中第69行opts设置断点，观察opts最后一层输出维度。这是逐层逐通道预测非零率所带来的弊端，其他的层并不能进行处理
