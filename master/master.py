@@ -55,7 +55,7 @@ class Master:
         if self.__dag_dnn is not None:
             assert tensor is not None, "check is True but result is None!"
             self.__logger.info(f"checking IFR{ifr_id}")
-            results = self.__dag_dnn.execute(ipt)
+            results = self.__dag_dnn.execute(ipt) # 验证结果是否符合预期
             err = torch.max(torch.abs(tensor-results[-1]))
             if err < 1e-5:
                 self.__logger.info(f"IFR{ifr_id} max_err={err}")
