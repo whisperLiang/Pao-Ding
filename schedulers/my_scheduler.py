@@ -11,6 +11,7 @@ from core.ifr import IFR, WkJob
 from core.predictor import NZPred
 from master.scheduler import Scheduler
 from schedulers.metric import LatencyMetric, Metric
+from rpc.stub_factory import MStubFactory
 
 
 class MyScheduler(Scheduler):
@@ -18,7 +19,7 @@ class MyScheduler(Scheduler):
     # TODO: 改进！
     def __init__(self, s_dag, nzpred: NZPred,
                  wk_cap: List[float], wk_bwth: List[float], ly_comp: List[float],
-                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any], layers: List[Node], node2index: Dict[Node, int]):
+                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any], layers: List[Node], node2index: Dict[Node, int], stb_fct: MStubFactory):
         self.__sdag = s_dag
         self.__layers = layers
         self.__node2index = node2index
@@ -34,6 +35,7 @@ class MyScheduler(Scheduler):
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__pre_wk_ilys = [[] for _ in range(len(wk_cap))]  # 各Worker上次运行时的输入层
         self.__fs_cost = []  # 各帧各阶段的预估耗时
+        self.__stb_fct = stb_fct
 
     def group_size(self) -> int:
         """建议的group大小，但实际上可能比这个小"""
@@ -54,6 +56,14 @@ class MyScheduler(Scheduler):
         :param s_ready: 根据fs_cost和当前IFR状态给出的各阶段就绪时间的估计。fs_cost不合法则为None
         :return ifr_group ifr_group[i]对应ipt_group[i]
         """
+        # 获取各个worker的实时上传带宽
+        wk_bwths = [0. for _ in self.__wk_bwth]
+        for wid in range(len(self.__wk_bwth)):
+            self.__logger.info(f"Getting bandwidth from worker{wid}...")
+            wk_bwths[wid] = self.__stb_fct.worker(wid).get_bandwidth()*1024*1024
+            self.__logger.info(f"worker{wid} bandwidth: {wk_bwths[wid]}")
+        self.__wk_bwth = wk_bwths
+
         assert len(ipt_group) > 0
         dif_group = [ipt_group[0] - pre_ipt] + [ipt_group[i] - ipt_group[i-1] for i in range(1, len(ipt_group))] # 帧差
         # 观察发现，原始数据也存在一定的稀疏性，但是分布非常集中。对于一个层而言，几乎所有帧的非零占比都在平均值附近
@@ -62,6 +72,7 @@ class MyScheduler(Scheduler):
         self.__logger.info(f"start predicting...")
         # 中间特征残差数据传输量
         dif_gp_lbsz = [Scheduler.dif2lbsz(dif, self.__sdag, self.__predictors, org_gp_lbsz[ind]) for ind, dif in enumerate(dif_group)]
+        
         metric = LatencyMetric(self.__ly_comp, self.__wk_cap, self.__wk_bwth,
                                self.__pre_wk_ilys, org_gp_lbsz, dif_gp_lbsz, s_ready)
         opt_wk_elys, opt_cost = self.recur_find_chain([], metric)

@@ -115,7 +115,7 @@ class ActTimer(Timer):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        self._logger.debug(f"{self._act_name} costs {round(self.cost(), 2)}s")
+        self._logger.debug(f"{self._act_name} costs {round(self.cost(), 5)}s")
 
 
 class SerialTimer(ActTimer):
@@ -135,10 +135,22 @@ def timed_rpc(rpc_func: Callable, req_msg: Message, dest: str, mode: str, logger
     if 's' in mode:
         mb_size = req_msg.ByteSize() / 1024 / 1024  # 单位MB
         # 计算网速时，添加极小量避免本地模拟时出现除零异常
-        logger.debug(f"Sending {req_msg.__class__.__name__} to {dest} costs {round(timer.cost(), 2)}s, "
-                     f"size={round(mb_size, 2)}MB, speed={round(mb_size / (timer.cost() + 1e-6), 2)}MB/s")
+        logger.debug(f"Sending {req_msg.__class__.__name__} to {dest} costs {round(timer.cost(), 5)}s, "
+                     f"size={round(mb_size, 5)}MB, speed={round(mb_size / (timer.cost() + 1e-6), 5)}MB/s")
     if 'r' in mode:
         mb_size = rsp_msg.ByteSize() / 1024 / 1024  # 单位MB
-        logger.debug(f"Getting {rsp_msg.__class__.__name__} from {dest} costs {round(timer.cost(), 2)}s, "
-                     f"size={round(mb_size, 2)}MB, speed={round(mb_size / (timer.cost() + 1e-6), 2)}MB/s")
+        logger.debug(f"Getting {rsp_msg.__class__.__name__} from {dest} costs {round(timer.cost(), 5)}s, "
+                     f"size={round(mb_size, 5)}MB, speed={round(mb_size / (timer.cost() + 1e-6), 5)}MB/s")
     return rsp_msg
+
+def timed_rpc_bandwidth(rpc_func: Callable, req_msg: Message, dest: str, mode: str, logger: logging.Logger) -> Message:
+    """对整个rpc计时，rpc_func应该只有发送或接收明显耗时，mode为s表示发送，r表示接收"""
+    with Timer() as timer:
+        rsp_msg = rpc_func(req_msg)
+
+    mb_size = rsp_msg.ByteSize() / 1024 / 1024  # 单位MB
+    time_costs = timer.cost()
+    speed = round(mb_size / (time_costs + 1e-6), 5)
+    logger.debug(f"Getting {rsp_msg.__class__.__name__} from {dest} costs {round(time_costs, 5)}s, "
+                     f"size={round(mb_size, 5)}MB, speed={speed}MB/s")
+    return speed

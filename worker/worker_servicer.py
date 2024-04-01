@@ -9,7 +9,7 @@ import grpc
 from core.ifr import IFR
 from core.dag_dnn import DagDNN
 from core.util import SerialTimer
-from rpc.msg_pb2 import IFRMsg, Rsp, Req, LayerCostMsg, FinishMsg, StageMsg
+from rpc.msg_pb2 import IFRMsg, Rsp, Req, LayerCostMsg, FinishMsg, StageMsg, BandwidthMsg
 from rpc import msg_pb2_grpc
 from rpc.stub_factory import WStubFactory, GRPC_OPTIONS
 from worker.worker import Worker
@@ -38,7 +38,14 @@ class WorkerServicer(msg_pb2_grpc.WorkerServicer):
     def layer_cost(self, req: Req, context: grpc.ServicerContext) -> LayerCostMsg:
         costs = self.worker.layer_cost()
         with SerialTimer(SerialTimer.SType.DUMP, LayerCostMsg, self.logger):
-            return LayerCostMsg(costs=pickle.dumps(costs))
+            laycostmsg = LayerCostMsg(costs=pickle.dumps(costs))
+            return laycostmsg
+        
+    def get_bandwidth(self, req: Req, context: grpc.ServicerContext) -> BandwidthMsg:
+        bandwidth_info = self.worker.get_bandwidth()
+        with SerialTimer(SerialTimer.SType.DUMP, BandwidthMsg, self.logger):
+            bandwidth_info = BandwidthMsg(infos=pickle.dumps(bandwidth_info))
+        return bandwidth_info
 
     def finish_stage_rev(self, req: Req, context: grpc.ServicerContext) -> FinishMsg:
         while 1:

@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 from queue import Queue
 from typing import Dict, Any, List, Tuple, Type
 from threading import Thread, Condition
@@ -17,7 +18,6 @@ from core.util import cached_func, ActTimer
 from core.dag_dnn import DagDNN
 from rpc.stub_factory import WStubFactory
 
-
 class Worker(Thread):
     """以pipeline的方式执行Job"""
     def __init__(self, id_: int, dag_dnn: DagDNN, frame_size: Tuple[int, int], check: bool,
@@ -32,12 +32,15 @@ class Worker(Thread):
         self.__stb_fct = stb_fct
         self.__logger.info(f"Worker{self.__id} profiling...")
         self.__costs = []
+        self.__bandwidth = None
         # TODO: 缓存文件名包括hostname
         costs = cached_func(f"w{id_}.{dag_dnn.model_name}.{frame_size[0]}x{frame_size[1]}.cst", self.profile_dnn_cost,
                             dag_dnn, frame_size, config['prof_niter'], logger=self.__logger)
+        bandwidth_info = os.urandom(int(1024 * 1024 * 1))  # Generate 1MB of random data
         self.__logger.info(f"layer_costs={costs}")
         with self.__cv:
             self.__costs = costs
+            self.__bandwidth = bandwidth_info
             self.__cv.notifyAll()
 
     def id(self):
@@ -93,7 +96,16 @@ class Worker(Thread):
                 self.__cv.wait()
             self.__logger.debug("got layer costs")
             return self.__costs
-
+    
+    def get_bandwidth(self) -> bytes:
+        """生成数据，用于测试带宽
+        Todo:后期可以换成各个worker的系统信息"""
+        with self.__cv:
+            while self.__bandwidth is None:
+                self.__cv.wait()
+            self.__logger.debug("send bandwidth info")
+            return self.__bandwidth
+        
     class _TimingExNode(ExNode):
         def __init__(self, node: Node):
             super().__init__(node)

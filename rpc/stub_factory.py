@@ -9,9 +9,9 @@ from torch import Tensor
 
 from core.ifr import IFR
 from core.predictor import NZPred
-from core.util import SerialTimer, timed_rpc, tensor2msg
+from core.util import SerialTimer, timed_rpc, tensor2msg, timed_rpc_bandwidth
 from rpc import msg_pb2_grpc
-from rpc.msg_pb2 import Req, FinishMsg, LayerCostMsg, NZPredMsg, StageMsg
+from rpc.msg_pb2 import Req, FinishMsg, LayerCostMsg, NZPredMsg, StageMsg, BandwidthMsg
 
 MAX_MESSAGE_LENGTH = 1024*1024*1024   # 最大消息长度为1GB
 GRPC_OPTIONS=[
@@ -97,6 +97,10 @@ class WorkerStub:
         with SerialTimer(SerialTimer.SType.LOAD, LayerCostMsg, self._logger):
             costs = pickle.loads(msg.costs)
         return costs
+    
+    def get_bandwidth(self) -> List[float]:
+        bandwidth = timed_rpc_bandwidth(self._stub.get_bandwidth, Req(), self._name, 'r', self._logger)
+        return bandwidth
 
 
 class TrainerStub:

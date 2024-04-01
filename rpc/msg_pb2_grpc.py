@@ -34,6 +34,11 @@ class WorkerStub(object):
                 request_serializer=rpc_dot_msg__pb2.Req.SerializeToString,
                 response_deserializer=rpc_dot_msg__pb2.StageMsg.FromString,
                 )
+        self.get_bandwidth = channel.unary_unary(
+                '/msg.Worker/get_bandwidth',
+                request_serializer=rpc_dot_msg__pb2.Req.SerializeToString,
+                response_deserializer=rpc_dot_msg__pb2.BandwidthMsg.FromString,
+                )
 
 
 class WorkerServicer(object):
@@ -63,6 +68,12 @@ class WorkerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def get_bandwidth(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_WorkerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -85,6 +96,11 @@ def add_WorkerServicer_to_server(servicer, server):
                     servicer.finish_stage_rev,
                     request_deserializer=rpc_dot_msg__pb2.Req.FromString,
                     response_serializer=rpc_dot_msg__pb2.StageMsg.SerializeToString,
+            ),
+            'get_bandwidth': grpc.unary_unary_rpc_method_handler(
+                    servicer.get_bandwidth,
+                    request_deserializer=rpc_dot_msg__pb2.Req.FromString,
+                    response_serializer=rpc_dot_msg__pb2.BandwidthMsg.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -161,6 +177,23 @@ class Worker(object):
         return grpc.experimental.unary_stream(request, target, '/msg.Worker/finish_stage_rev',
             rpc_dot_msg__pb2.Req.SerializeToString,
             rpc_dot_msg__pb2.StageMsg.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def get_bandwidth(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/msg.Worker/get_bandwidth',
+            rpc_dot_msg__pb2.Req.SerializeToString,
+            rpc_dot_msg__pb2.BandwidthMsg.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
