@@ -87,3 +87,8 @@
 - [x] 论文中alexnet模型层数以及alexnet模型的可视化都表明了不能处理出最终结果
 ## 2024.3.24(开始庖丁的改进)
 - [x] 重新阅读代码之后，发现ResMap调度算法只在限制了上行带宽时才能有效工作，所以它的调度都是针对固定带宽
+## 2024.4.1
+- [x] msg.proto添加用于实时带宽测量的消息以及服务
+- [x] mysheduler.py添加实时获取带宽功能代码用于组帧调度
+- [x] util.py添加timed_rpc_bandwidth函数用于rpc时间测量并计算带宽
+- [x] worker.py添加随机生成1Mb大小数据，使用get_bandwidth函数进行发送
