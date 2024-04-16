@@ -5,7 +5,7 @@ log_cfg: logging.yml
 port:
   master: 11111
   trainer: 22210
-  worker: [33320, 33321]
+  worker: [33320, 33321, 33322]
 # Network address when accessing. m, t, w0 correspond to master, trainer, worker0 respectively.
 net:
 #  m->t: 'localhost:22210'
@@ -19,8 +19,9 @@ net:
   m->t: '192.168.0.204:22210'
   m->w0: '192.168.0.113:33320'
   m->w1: '192.168.0.114:33321'
+  m->w2: '192.168.0.114:33322'
   w0->w1: '192.168.0.114:33321'
-  w1->w2: '192.168.0.115:33321' 
+  w1->w2: '192.168.0.115:33322' 
 
 # DNN load function, use this to choose dnn
 dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_alexnet
@@ -46,7 +47,7 @@ master:
   itv_time: 0  # How long to wait after issuing an IFR, for debugging only. Normally it should be 0
   # len(bandwidth) must be equal to len(worker).
   # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
-  bandwidth: [3, 3]
+  bandwidth: [3, 3, 3]
   scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
   # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
   LBScheduler:
