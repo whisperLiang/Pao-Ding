@@ -87,7 +87,8 @@ class Master:
         schd_type = config['scheduler']
         self.__scheduler: Scheduler = schd_type(s_dag, nzpred, wk_cap, wk_bwth, ly_comp,
                                                 job_type, self.__ifr_num,
-                                                defaultdict(dict, config)[schd_type.__name__], dag_dnn.layers, dag_dnn.node2index)
+                                                defaultdict(dict, config)[schd_type.__name__], dag_dnn.layers, dag_dnn.node2index,
+                                                self.__stb_fct)
 
     @staticmethod
     def get_ipt_from_video(capture: cv2.VideoCapture, frame_size: Tuple[int, int]) -> Tensor:
