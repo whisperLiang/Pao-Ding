@@ -94,4 +94,4 @@
 - [x] worker.py添加随机生成1Mb大小数据，使用get_bandwidth函数进行发送
 ## 2024.4.15
 - [x] iwqos2024拒稿，论文有太多格式错误，实验只包含两个设备
-- [x] 添加.gitignore文件过滤./vscode文件夹
+- [x] 添加.gitignore文件过滤.vscode文件夹
