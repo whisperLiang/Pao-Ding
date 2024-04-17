@@ -57,12 +57,14 @@ class MyScheduler(Scheduler):
         :return ifr_group ifr_group[i]对应ipt_group[i]
         """
         # 获取各个worker的实时上传带宽
-        wk_bwths = [0. for _ in self.__wk_bwth]
-        for wid in range(len(self.__wk_bwth)):
-            self.__logger.info(f"Getting bandwidth from worker{wid}...")
-            wk_bwths[wid] = self.__stb_fct.worker(wid).get_bandwidth()*1024*1024
-            self.__logger.info(f"worker{wid} bandwidth: {wk_bwths[wid]}")
-        self.__wk_bwth = wk_bwths
+        online_bwths = False
+        if online_bwths:
+            wk_bwths = [0. for _ in self.__wk_bwth]
+            for wid in range(len(self.__wk_bwth)):
+                self.__logger.info(f"Getting bandwidth from worker{wid}...")
+                wk_bwths[wid] = self.__stb_fct.worker(wid).get_bandwidth()*1024*1024
+                self.__logger.info(f"worker{wid} bandwidth: {wk_bwths[wid]}")
+            self.__wk_bwth = wk_bwths
 
         assert len(ipt_group) > 0
         dif_group = [ipt_group[0] - pre_ipt] + [ipt_group[i] - ipt_group[i-1] for i in range(1, len(ipt_group))] # 帧差
