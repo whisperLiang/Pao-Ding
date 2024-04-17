@@ -12,6 +12,7 @@ from core.predictor import NZPred
 from master.scheduler import Scheduler
 from schedulers.metric import LatencyMetric, Metric
 from rpc.stub_factory import MStubFactory
+from torch.nn import MaxPool2d, AvgPool2d, AdaptiveAvgPool2d, AdaptiveMaxPool2d, ReLU
 
 
 class MyScheduler(Scheduler):
@@ -43,6 +44,16 @@ class MyScheduler(Scheduler):
 
     def fs_cost(self) -> List[List[float]]:
         return self.__fs_cost
+    
+    def layers_to_recur(self) -> List[int]:
+        """返回需要递归搜索的层的id列表"""
+        layers_to_recur = []
+        for ind, node in enumerate(self.__layers):
+            if isinstance(node.module, (MaxPool2d, AvgPool2d, AdaptiveAvgPool2d, AdaptiveMaxPool2d, ReLU)):
+                layers_to_recur.append(ind)
+            if ind == len(self.__layers) - 1 and ind not in layers_to_recur:
+                layers_to_recur.append(ind)
+        return layers_to_recur
 
     def gen_ifr_group(self, ifr_cnt: int, pre_ipt: Tensor,
                       ipt_group: List[Tensor], s_ready: List[float] = None) -> List[IFR]:
@@ -73,11 +84,20 @@ class MyScheduler(Scheduler):
         org_gp_lbsz = [self.__o_lbsz for ipt in ipt_group]
         self.__logger.info(f"start predicting...")
         # 中间特征残差数据传输量
-        dif_gp_lbsz = [Scheduler.dif2lbsz(dif, self.__sdag, self.__predictors, org_gp_lbsz[ind]) for ind, dif in enumerate(dif_group)]
+        dif_gp_lbsz = [Scheduler.dif2lbsz(dif, self.__sdag, self.__predictors, org_gp_lbsz[ind]) for ind, dif in enumerate(dif_group)]     
         
         metric = LatencyMetric(self.__ly_comp, self.__wk_cap, self.__wk_bwth,
                                self.__pre_wk_ilys, org_gp_lbsz, dif_gp_lbsz, s_ready)
-        opt_wk_elys, opt_cost = self.recur_find_chain([], metric)
+        
+        # 是否进行剪枝搜索
+        prune_recursion = True
+        if prune_recursion:
+            layers_to_recur = self.layers_to_recur()
+            self.__logger.info(f"layers_to_recur: {layers_to_recur}")
+            opt_wk_elys, opt_cost = self.recur_find_prune([], metric, layers_to_recur)
+        else:
+            opt_wk_elys, opt_cost = self.recur_find_chain([], metric)
+
         self.__logger.info(f"opt: {opt_wk_elys} => cost={opt_cost}")
         # 预估各阶段耗时
         gp_wk_tran, gp_wk_cmpt = Metric.gp_plan2tran_cmpt_chain(
@@ -127,6 +147,35 @@ class MyScheduler(Scheduler):
         for my_last in range(last_ly, ly_num):  # last_ly表示当前Worker什么都没做，ly_num-1表示完成了剩余所有层
             wk_elys.append(list(range(last_ly+1, my_last+1)))
             cad_wk_elys, cad_cost = cls.recur_find_chain(wk_elys, metric)
+            wk_elys.pop()
+            if cad_cost < opt_cost:
+                opt_wk_elys, opt_cost = cad_wk_elys, cad_cost
+        assert opt_cost < float('inf')
+        return opt_wk_elys, opt_cost
+    
+    @classmethod
+    def recur_find_prune(cls, wk_elys: List[List[int]], metric: Metric, layers_to_recur: List[int]) -> Tuple[List[List[int]], float]:
+        """递归剪枝后指定的层为各个Worker分配任务，根据metric寻找最优分配方案。
+        :param wk_elys: 各Worker分配的层，初始为空，每次递归加一个Worker，Worker内各层按照id顺序排列
+        :param metric: wk_elys的相应代价，越小越好
+        :param layers_to_recur: 要递归的层的id列表
+        :return 最优的wk_elys, 相应的代价
+        """
+        wk_num, ly_num = metric.wk_num(), metric.ly_num()
+        worker_id = len(wk_elys)
+        last_ly = max((ly for lys in wk_elys for ly in lys), default=0)
+        if worker_id == wk_num-1:
+            wk_elys.append(list(range(last_ly+1, ly_num)))
+            cost = metric([wk_elys]*metric.gp_size())
+            res = copy.deepcopy(wk_elys)
+            wk_elys.pop()
+            return res, cost
+        opt_wk_elys, opt_cost = [], float('inf')
+        for my_last in layers_to_recur:  # 只处理指定的层
+            if my_last < last_ly or my_last >= ly_num:
+                continue
+            wk_elys.append(list(range(last_ly+1, my_last+1)))
+            cad_wk_elys, cad_cost = cls.recur_find_prune(wk_elys, metric, layers_to_recur)
             wk_elys.pop()
             if cad_cost < opt_cost:
                 opt_wk_elys, opt_cost = cad_wk_elys, cad_cost
