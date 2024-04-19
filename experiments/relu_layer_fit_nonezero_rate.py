@@ -96,7 +96,7 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
     show_seq为是否用点的颜色表示帧的顺序
     fit为使用什么拟合，''不拟合，'predictor'使用Trainer的Predictor拟合，'fit3'使用三次函数拟合
     """
-    SUB_NROW, SUB_NCOL = 1, 3
+    SUB_NROW, SUB_NCOL = 1, 2
     if fit == 'predictor':
         print("training predictor...", file=sys.stderr)
         predictors = Trainer.train_predictors(dag_dnn, [fcnz[:NFRAME_SHOW] for fcnz in g_lfcnz])
@@ -147,7 +147,7 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
 
 # 控制图片大小的方法：手动调整窗口大小，达到和论文图的相同大小即可
 if __name__ == '__main__':
-    CNN_NAME = 'GoogLeNet'  #AlexNet, VGG, GoogLeNet, ResNet
+    CNN_NAME = 'ResNet'  #AlexNet, VGG, GoogLeNet, ResNet
     VIDEO_NAME = 'parking'  # road, campus, parking
     RESOLUTION = '480x720'  # 数据集的分辨率
     NFRAME_TOTAL = 400  # 数据集中的帧数
