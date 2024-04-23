@@ -13,6 +13,7 @@ from master.scheduler import Scheduler
 from schedulers.metric import LatencyMetric, Metric
 from rpc.stub_factory import MStubFactory
 from torch.nn import MaxPool2d, AvgPool2d, AdaptiveAvgPool2d, AdaptiveMaxPool2d, ReLU
+import time
 
 
 class MyScheduler(Scheduler):
@@ -90,13 +91,16 @@ class MyScheduler(Scheduler):
                                self.__pre_wk_ilys, org_gp_lbsz, dif_gp_lbsz, s_ready)
         
         # 是否进行剪枝搜索
-        prune_recursion = True
+        layers_to_recur = self.layers_to_recur()
+        search_btime = time.time()
+        prune_recursion = False
         if prune_recursion:
-            layers_to_recur = self.layers_to_recur()
             self.__logger.info(f"layers_to_recur: {layers_to_recur}")
             opt_wk_elys, opt_cost = self.recur_find_prune([], metric, layers_to_recur)
         else:
             opt_wk_elys, opt_cost = self.recur_find_chain([], metric)
+        search_etime = time.time()
+        self.__logger.info(f"search time: {search_etime-search_btime}")
 
         self.__logger.info(f"opt: {opt_wk_elys} => cost={opt_cost}")
         # 预估各阶段耗时
