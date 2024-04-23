@@ -5,7 +5,7 @@ log_cfg: logging.yml
 port:
   master: 11111
   trainer: 22210
-  worker: [33320, 33321, 33322]
+  worker: [33320, 33321]
 # Network address when accessing. m, t, w0 correspond to master, trainer, worker0 respectively.
 net:
 #  m->t: 'localhost:22210'
