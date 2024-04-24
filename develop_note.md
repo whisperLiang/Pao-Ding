@@ -21,3 +21,6 @@
 - [x] 完善了torch_split.py文件，45种模型测试成功
 ## 2023.11.23
 - [x] 解决了nn.dropout等模块与其他模块公用一个梯度，需要舍弃nn.dropout，导致理论上无法训练的问题
+## 2024.4.24
+- [x] modify computational dependency graph function to plot
+- [x] mkdir a folder to store the computational dependency graph
