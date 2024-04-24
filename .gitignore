@@ -1,0 +1,4 @@
+.vscode
+.cache
+*.pyc
+*.tc

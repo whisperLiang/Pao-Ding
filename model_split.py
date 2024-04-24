@@ -217,7 +217,7 @@ class DependencyGraph(object):
         visited = {}
         gradfn2inshape = defaultdict(deque)
         gradfn2outshape = defaultdict(deque)
-        self.module2result = {}
+        # self.module2result = {}
         self._2d_4d = True # only for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
             if module not in visited:
@@ -234,8 +234,8 @@ class DependencyGraph(object):
                 outputs = outputs.data
             if isinstance(outputs, torchvision.models.detection.image_list.ImageList):
                 outputs = outputs.tensors
-            if isinstance(outputs, torch.Tensor):
-                self.module2result[module] = outputs.clone().detach()
+            # if isinstance(outputs, torch.Tensor):
+            #     self.module2result[module] = outputs.clone().detach()
 
             if len(module._modules) == 0:
                 # gradfn2module[outputs.grad_fn] = module
@@ -583,21 +583,20 @@ def forward_ll(dpg, x, ignored_blocks=[]):
     return x, layer_topo
 
 # 3. draw computational graph
-def draw_computational_graph(dpg, save_as, title='Computational Graph', figsize=(16, 16), dpi=200, cmap=None):
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(16, 16), dpi=300, cmap=None):
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
-    n_nodes = len(dpg.gradfn2node)
-    module2idx = {m: i for (i, m) in enumerate(dpg.gradfn2node.values())}
+    n_nodes = len(layertopo)
+    node2idx = {n: i for (i, n) in enumerate(layertopo)}
     G = np.zeros((n_nodes, n_nodes))
     fill_value = 1
-    for module, node in dpg.gradfn2node.items():
-        for input_node in node.inputs:
-            G[module2idx[input_node], module2idx[node]] = fill_value
-            G[module2idx[node], module2idx[input_node]] = fill_value
-        for out_node in node.outputs:
-            G[module2idx[out_node], module2idx[node]] = fill_value
-            G[module2idx[node], module2idx[out_node]] = fill_value
+    for node in layertopo:
+        for out_node_list in node.outputs:
+            out_node = out_node_list[0]
+            if out_node in node2idx:
+                G[node2idx[out_node], node2idx[node]] = fill_value
+                G[node2idx[node], node2idx[out_node]] = fill_value
         # pruner = dpg.get_pruner_of_module(module)
     fig, ax = plt.subplots(figsize=(figsize))
     ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
