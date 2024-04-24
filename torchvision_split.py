@@ -92,6 +92,31 @@ from torchvision.models.shufflenetv2 import ( # TODO: support channel shuffling
     shufflenet_v2_x2_0,
 )
 
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(16, 16), dpi=300, cmap=None):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    plt.style.use('bmh')
+    n_nodes = len(layertopo)
+    node2idx = {n: i for (i, n) in enumerate(layertopo)}
+    G = np.zeros((n_nodes, n_nodes))
+    fill_value = 1
+    for node in layertopo:
+        for out_node_list in node.outputs:
+            out_node = out_node_list[0]
+            if out_node in node2idx:
+                G[node2idx[out_node], node2idx[node]] = fill_value
+                G[node2idx[node], node2idx[out_node]] = fill_value
+        # pruner = dpg.get_pruner_of_module(module)
+    fig, ax = plt.subplots(figsize=(figsize))
+    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
+    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
+    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
+    if title is not None:
+        ax.set_title(title)
+    fig.tight_layout()
+    plt.savefig(save_as, dpi=dpi)
+    return fig, ax
+
 
 if __name__ == "__main__":
 
@@ -121,9 +146,10 @@ if __name__ == "__main__":
         #########################################
         # Testing 
         #########################################
-        out_after, _ = ms.forward_ll(dpg, example_inputs, ignored_blocks=ignored_layers)
+        out_after, layer_topo = ms.forward_ll(dpg, example_inputs, ignored_blocks=ignored_layers)
         if torch.allclose(out_before, out_after):
             print(f"{model_name} splits success!")
+            fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.png', title='Computational Dependency Graph', figsize=(16, 16), dpi=300, cmap=None)
             return True
         else:
             print(f"{model_name} splits failed!")

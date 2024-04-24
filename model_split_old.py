@@ -518,9 +518,9 @@ def draw_computational_graph(dpg, save_as, title='Computational Graph', figsize=
     G = np.zeros((n_nodes, n_nodes))
     fill_value = 1
     for module, node in dpg.module2node.items():
-        for input_node in node.inputs:
-            G[module2idx[input_node], module2idx[node]] = fill_value
-            G[module2idx[node], module2idx[input_node]] = fill_value
+        # for input_node in node.inputs:
+        #     G[module2idx[input_node], module2idx[node]] = fill_value
+        #     G[module2idx[node], module2idx[input_node]] = fill_value
         for out_node in node.outputs:
             G[module2idx[out_node], module2idx[node]] = fill_value
             G[module2idx[node], module2idx[out_node]] = fill_value
