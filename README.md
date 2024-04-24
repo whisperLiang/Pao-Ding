@@ -1,2 +1,2 @@
-# Cross-Cloud-Ladder
-Cross-Cloud Ladder: a generalized framework for distributed collaborative inference of DNN models
+# Pao-Ding
+Pao-Ding: Automatic DNN Parsing and Decomposition for Collaborative Inference
