@@ -92,7 +92,7 @@ from torchvision.models.shufflenetv2 import ( # TODO: support channel shuffling
     shufflenet_v2_x2_0,
 )
 
-def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(16, 16), dpi=300, cmap=None):
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), dpi=300, cmap=None, title_fontsize=20, label_fontsize=20, tick_fontsize=20):
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -106,13 +106,16 @@ def draw_computational_graph(layertopo, save_as, title='Computational Graph', fi
             if out_node in node2idx:
                 G[node2idx[out_node], node2idx[node]] = fill_value
                 G[node2idx[node], node2idx[out_node]] = fill_value
-        # pruner = dpg.get_pruner_of_module(module)
     fig, ax = plt.subplots(figsize=(figsize))
     ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
     plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
     plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=title_fontsize)
+    plt.xlabel('Layer Index', fontsize=label_fontsize)
+    plt.ylabel('Layer Index', fontsize=label_fontsize)
+    plt.xticks(fontsize=tick_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
     fig.tight_layout()
     plt.savefig(save_as, dpi=dpi)
     return fig, ax
@@ -149,7 +152,8 @@ if __name__ == "__main__":
         out_after, layer_topo = ms.forward_ll(dpg, example_inputs, ignored_blocks=ignored_layers)
         if torch.allclose(out_before, out_after):
             print(f"{model_name} splits success!")
-            # fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.png', title='Computational Dependency Graph', figsize=(16, 16), dpi=300, cmap=None)
+            fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.png', 
+                                               title=f'Computational Dependency Graph of {model_name}', figsize=(16, 16), dpi=300, cmap=None)
             return True
         else:
             print(f"{model_name} splits failed!")
