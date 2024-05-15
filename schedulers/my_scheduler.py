@@ -12,7 +12,7 @@ from core.predictor import NZPred
 from master.scheduler import Scheduler
 from schedulers.metric import LatencyMetric, Metric
 from rpc.stub_factory import MStubFactory
-from torch.nn import MaxPool2d, AvgPool2d, AdaptiveAvgPool2d, AdaptiveMaxPool2d, ReLU
+from torch.nn import Conv2d, BatchNorm2d
 import time
 
 
@@ -50,9 +50,7 @@ class MyScheduler(Scheduler):
         """返回需要递归搜索的层的id列表"""
         layers_to_recur = []
         for ind, node in enumerate(self.__layers):
-            if isinstance(node.module, (MaxPool2d, AvgPool2d, AdaptiveAvgPool2d, AdaptiveMaxPool2d, ReLU)):
-                layers_to_recur.append(ind)
-            if ind == len(self.__layers) - 1 and ind not in layers_to_recur:
+            if not isinstance(node.module, (Conv2d, BatchNorm2d)):
                 layers_to_recur.append(ind)
         return layers_to_recur
 
