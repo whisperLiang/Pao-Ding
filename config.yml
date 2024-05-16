@@ -55,7 +55,7 @@ master:
   itv_time: 0  # How long to wait after issuing an IFR, for debugging only. Normally it should be 0
   # len(bandwidth) must be equal to len(worker).
   # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
-  bandwidth: [3, 3]
+  bandwidth: [20, 20]
   # bandwidth: [3, 3, 3]
   scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
   # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
