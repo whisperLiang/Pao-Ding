@@ -91,9 +91,9 @@ class MyScheduler(Scheduler):
         # 是否进行剪枝搜索
         layers_to_recur = self.layers_to_recur()
         search_btime = time.time()
-        prune_recursion = False
+        prune_recursion = True
         if prune_recursion:
-            self.__logger.info(f"layers_to_recur: {layers_to_recur}")
+            # self.__logger.info(f"layers_to_recur: {layers_to_recur}")
             opt_wk_elys, opt_cost = self.recur_find_prune([], metric, layers_to_recur)
         else:
             opt_wk_elys, opt_cost = self.recur_find_chain([], metric)
