@@ -8,6 +8,7 @@ from core.executor import Job, Node
 from core.ifr import WkJob
 from core.itg_executor import ItgJob
 from master.scheduler import G1Scheduler
+from rpc.stub_factory import MStubFactory
 from trainer.trainer import NZPred
 
 
@@ -15,7 +16,7 @@ class LBScheduler(G1Scheduler):
     """Load Balance Scheduler"""
     def __init__(self, s_dag, nzpred: NZPred,
                  wk_cap: List[float], wk_bwth: List[float], ly_comp: List[float],
-                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any], layers: List[Node], node2index: Dict[Node, int]):
+                 job_type: Type[Job], ifr_num: int, config: Dict[str, Any], layers: List[Node], node2index: Dict[Node, int], stb_fct: MStubFactory):
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__job_type = job_type
         self.__wk_cap = wk_cap
@@ -27,6 +28,7 @@ class LBScheduler(G1Scheduler):
         self.__logger.info(f"elys={self.__lb_wk_elys}")
         self.__lb_wk_olys = [self.elys2olys(elys, self.__layers, self.__node2index) for elys in self.__lb_wk_elys]
         self.__logger.info(f"olys={self.__lb_wk_olys}")
+        self.__stb_fct = stb_fct
 
     def gen_wk_jobs(self, ifr_id: int, pre_ipt: Tensor, cur_ipt: Tensor) -> List[WkJob]:
         jobs = [WkJob(w, self.__job_type(lys, self.__lb_wk_olys[w], {}))

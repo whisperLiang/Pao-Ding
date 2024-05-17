@@ -17,18 +17,18 @@ net:
   # m->w1: '192.168.0.121:33321'
   # w0->w1: '192.168.0.121:33321'
 
-  m->t: '192.168.0.27:22210'
-  m->w0: '192.168.0.114:33320'
-  m->w1: '192.168.0.115:33321'
-  # m->w2: '192.168.0.115:33322'
-  w0->w1: '192.168.0.115:33321'
-  # w1->w2: '192.168.0.115:33322' 
+  # m->t: '192.168.0.27:22210'
+  # m->w0: '192.168.0.114:33320'
+  # m->w1: '192.168.0.115:33321'
+  # # m->w2: '192.168.0.115:33322'
+  # w0->w1: '192.168.0.115:33321'
+  # # w1->w2: '192.168.0.115:33322' 
 
-  # m->t: '192.168.13.95:22210'
-  # m->w0: '192.168.13.231:33320'
-  # m->w1: '192.168.13.1:33321'
+  m->t: '192.168.67.95:22210'
+  m->w0: '192.168.67.1:33320'
+  m->w1: '192.168.67.227:33321'
   # m->w2: '192.168.13.227:33322'
-  # w0->w1: '192.168.13.1:33321'
+  w0->w1: '192.168.13.227:33321'
   # w1->w2: '192.168.13.227:33322' 
 
 # DNN load function, use this to choose dnn
@@ -55,7 +55,7 @@ master:
   itv_time: 0  # How long to wait after issuing an IFR, for debugging only. Normally it should be 0
   # len(bandwidth) must be equal to len(worker).
   # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
-  bandwidth: [20, 20]
+  bandwidth: [3, 3]
   # bandwidth: [3, 3, 3]
   scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
   # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
