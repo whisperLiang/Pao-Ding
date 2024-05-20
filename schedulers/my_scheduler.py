@@ -85,16 +85,16 @@ class MyScheduler(Scheduler):
         # 中间特征残差数据传输量
         dif_gp_lbsz = [Scheduler.dif2lbsz(dif, self.__sdag, self.__predictors, org_gp_lbsz[ind]) for ind, dif in enumerate(dif_group)]     
         
+        layers_to_recur = self.layers_to_recur()
         metric = LatencyMetric(self.__ly_comp, self.__wk_cap, self.__wk_bwth,
-                               self.__pre_wk_ilys, org_gp_lbsz, dif_gp_lbsz, s_ready)
+                               self.__pre_wk_ilys, org_gp_lbsz, dif_gp_lbsz, s_ready, layers_to_recur)
         
         # 是否进行剪枝搜索
-        layers_to_recur = self.layers_to_recur()
         search_btime = time.time()
         prune_recursion = True
         if prune_recursion:
             # self.__logger.info(f"layers_to_recur: {layers_to_recur}")
-            opt_wk_elys, opt_cost = self.recur_find_prune([], metric, layers_to_recur)
+            opt_wk_elys, opt_cost = self.recur_find_prune([], metric)
         else:
             opt_wk_elys, opt_cost = self.recur_find_chain([], metric)
         search_etime = time.time()
@@ -156,7 +156,7 @@ class MyScheduler(Scheduler):
         return opt_wk_elys, opt_cost
     
     @classmethod
-    def recur_find_prune(cls, wk_elys: List[List[int]], metric: Metric, layers_to_recur: List[int]) -> Tuple[List[List[int]], float]:
+    def recur_find_prune(cls, wk_elys: List[List[int]], metric: Metric) -> Tuple[List[List[int]], float]:
         """递归剪枝后指定的层为各个Worker分配任务，根据metric寻找最优分配方案。
         :param wk_elys: 各Worker分配的层，初始为空，每次递归加一个Worker，Worker内各层按照id顺序排列
         :param metric: wk_elys的相应代价，越小越好
@@ -166,6 +166,7 @@ class MyScheduler(Scheduler):
         wk_num, ly_num = metric.wk_num(), metric.ly_num()
         worker_id = len(wk_elys)
         last_ly = max((ly for lys in wk_elys for ly in lys), default=0)
+        layers_to_recur = metric.layers_to_recur()
         if worker_id == wk_num-1:
             wk_elys.append(list(range(last_ly+1, ly_num)))
             cost = metric([wk_elys]*metric.gp_size())
@@ -177,7 +178,7 @@ class MyScheduler(Scheduler):
             if my_last < last_ly or my_last >= ly_num:
                 continue
             wk_elys.append(list(range(last_ly+1, my_last+1)))
-            cad_wk_elys, cad_cost = cls.recur_find_prune(wk_elys, metric, layers_to_recur)
+            cad_wk_elys, cad_cost = cls.recur_find_prune(wk_elys, metric)
             wk_elys.pop()
             if cad_cost < opt_cost:
                 opt_wk_elys, opt_cost = cad_wk_elys, cad_cost

@@ -5,7 +5,7 @@ from typing import List
 class Metric:
     def __init__(self, ly_comp: List[float], wk_cap: List[float], wk_bwth: List[float],
                  pre_wk_ilys: List[List[int]], org_gp_lbsz: List[List[float]], dif_gp_lbsz: List[List[float]],
-                 s_ready: List[float]):
+                 s_ready: List[float], layers_to_recur: List[int]):
         self._ly_comp = ly_comp
         assert len(wk_cap) == len(wk_bwth) == len(pre_wk_ilys), \
             f"{len(wk_cap)} = {len(wk_bwth)} = {len(pre_wk_ilys)} is False!"
@@ -16,6 +16,7 @@ class Metric:
         self._org_gp_lbsz = org_gp_lbsz
         self._dif_gp_lbsz = dif_gp_lbsz
         self._s_ready = s_ready
+        self._layers_to_recur = layers_to_recur
 
     def ly_num(self) -> int:
         return len(self._ly_comp)
@@ -25,6 +26,9 @@ class Metric:
 
     def gp_size(self) -> int:
         return len(self._org_gp_lbsz)
+    
+    def layers_to_recur(self) -> List[int]:
+        return self._layers_to_recur
 
     @abstractmethod
     def __call__(self, gp_wk_elys: List[List[List[int]]]) -> float:
