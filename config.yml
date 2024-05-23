@@ -32,9 +32,9 @@ net:
   # # w1->w2: '192.168.13.227:33322' 
 
 # DNN load function, use this to choose dnn
-# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_alexnet
+dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_alexnet
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_vgg16
-dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet18
+# dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet18
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_resnet50
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_googlenet
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_regnet
@@ -44,8 +44,8 @@ video_path: media/parking.mp4
 # Adjust the input frame to [nrow, ncol], which is a tuple of two int. None indicates don't resize.
 frame_size: !!python/tuple [480, 720]
 # "itg" or "dif". This option generates two corresponding options: executor_type and job_type
-# mode: dif
-mode: itg
+mode: dif
+# mode: itg
 # Whether check the correctness of result
 check: !!bool false
 
@@ -58,8 +58,8 @@ master:
   # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
   bandwidth: [3, 3]
   # bandwidth: [3, 3, 3]
-  # scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
-  scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
+  scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
+  # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
   LBScheduler:
   MyScheduler:
     gp_size: 3  # The number of frames a group contains. A group of frames will use the same scheduling policy

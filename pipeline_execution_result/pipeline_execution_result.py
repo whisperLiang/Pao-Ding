@@ -188,7 +188,8 @@ def show_ifr_records(ifr_records: List[IFRRecord], trds: List[str], xlim: int = 
     # plt.show()
 
     # 根据文件夹名保存图片，bbox_inches='tight'表示保存图片时不留白
-    plt.savefig(f'{folder_name}.png', bbox_inches='tight', pad_inches=0)
+    # plt.savefig(f'{folder_name}.png', bbox_inches='tight', pad_inches=0)
+    plt.savefig(f'{folder_name}.png')
 
 #Stage('w1->':transmit,s='2022-01-28 12:13:31.471',f='2022-01-28 12:13:31.473')
 
