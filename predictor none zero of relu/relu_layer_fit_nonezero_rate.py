@@ -86,7 +86,7 @@ def draw_logistic(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     ax.plot(xarr, yarr_pred, 'r-', label='Logistic Fit')
     # ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(yarr - yarr_pred))), 2)}")
 
-lg = {'size': 12}
+lg = {'size': 20}
 
 def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_scale: bool, show_seq: bool,
                   r_layers: List[Node], lfcnz: List[List[List[float]]], fit: str = None):
@@ -118,7 +118,7 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
             ax.set_xlim(0, 1)
             ax.set_ylim(0, 1)
             ax.set_aspect(1)
-            ax.tick_params(labelsize=13)
+            ax.tick_params(labelsize=18)
         i_fnz = lfnz[ahead_relu_l][1:]
         o_fnz = lfnz[l][1:]
         ahead_relu_l = l
@@ -142,7 +142,8 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
         # plt.legend(loc='upper left')
         if cnt > SUB_NROW*SUB_NCOL:
             cnt = 1
-            plt.figure(figsize=(7 ,3))
+            plt.figure(figsize=(8 ,4))
+            plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95, bottom=0.1, top=0.9)  # 调整子图间距&去除空白区域
 
 
 # 控制图片大小的方法：手动调整窗口大小，达到和论文图的相同大小即可
@@ -172,7 +173,8 @@ if __name__ == '__main__':
     g_lfcnz = [fcnz[:NFRAME_SHOW] for fcnz in g_lfcnz]
 
     for g_fit in FITS:
-        fig = plt.figure(figsize=(7 ,3)) # figsize=(7 ,3)
+        fig = plt.figure(figsize=(8 ,4)) # figsize=(8 ,4)
+        plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95, bottom=0.1, top=0.9)  # 调整子图间距&去除空白区域
         #fig.suptitle(g_fit)
         target_layers_in_out(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
                              g_r_layers, g_lfcnz, g_fit)
