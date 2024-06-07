@@ -3,6 +3,7 @@ from fractions import Fraction
 from typing import List, Optional, Tuple, Dict, Any, Type
 
 import torch
+import time
 from torch import Tensor
 from numpy import mean
 
@@ -138,7 +139,10 @@ class Scheduler:
         cnz = [float(chan.count_nonzero() / chan.nelement()) for chan in dif_ipt[0]]
         nz = mean(cnz)
         lnz = cls.predict_dag(nz, s_dag, predictors)
+        b_time = time.time()
         lsz = cls.relucnz2lsz(lnz, s_dag, one_org_gp_lbsz)
+        e_time = time.time()
+        print(f"predict time: {e_time - b_time}")
         return lsz
 
     @classmethod

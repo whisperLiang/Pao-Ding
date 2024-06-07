@@ -6,6 +6,7 @@ from typing import Tuple, List, Any, Dict
 
 import cv2
 import tqdm
+import time
 from torch import Tensor
 
 from core.util import cached_func
@@ -43,8 +44,11 @@ class Trainer(Thread):
         lfcnz = cached_func(data_name + '.lfcnz', self.collect_lfcnz, self.__dag_dnn, self.__video_path,
                             self.__frame_num, self.__frame_size, logger=self.__logger)
         self.__logger.info("training predictors...")
+        b_time = time.time()
         predictors = cached_func(data_name + '.pred', self.train_logrelupredictors,
                                  self.__dag_dnn, lfcnz, logger=self.__logger)
+        e_time = time.time()
+        self.__logger.info(f"training time: {e_time - b_time:.2f}s")
         self.__logger.info("train finished, predictors are ready")
         with self.__cv:
             self.__o_lcnz = o_lcnz

@@ -238,7 +238,7 @@ if __name__ == '__main__':
     XLIM = None  # 横轴的最大时间, None为matplotlib自动决定, 非None时最小时间也会设置为0
     LOCAL_DIR = 'lbc2'  # l模式下, 本地目录路径
     REMOTE_CFG = 'device.yml'  # 远程服务器的配置文件
-    folder_name = 'pdp_inceptionv3'
+    folder_name = 'resmap_alexnet'
 
     # TCZIP = './pipeline_execution_result/itg_alexnet.zip'  # 从zip文件中读取tc文件
     # g_mi_evts, g_w_i_evts = read_from_zip(TCZIP)
