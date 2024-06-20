@@ -5,6 +5,8 @@ from typing import Dict, Any
 import click
 import humanfriendly.terminal
 import yaml
+import threading
+from core.healthy_check import healthy_check_run
 
 from core.dif_executor import DifExecutor, DifJob
 from core.itg_executor import ItgExecutor, ItgJob
@@ -18,6 +20,14 @@ class TraceFilter(logging.Filter):
     def filter(self, record: LogRecord) -> bool:
         return getattr(record, 'trace', False)
 
+def http_server_thread():
+    # 在一个新线程中启动HTTP服务器
+    server_thread = threading.Thread(target=healthy_check_run)
+    server_thread.start()
+
+    # 等待服务器启动（这是一个简化；实际上，你可能需要更健壮的机制）
+    import time
+    time.sleep(1)  # 给服务器一个启动的机会
 
 def config_common(config_file: str, service_name: str) -> Dict[str, Any]:
     """设置启动LocalSimulator, MasterController, WorkerController前都需要配置的参数
@@ -65,6 +75,7 @@ def start_master(config_file: str):
               help='The id of this worker, which should already be in the configuration file')
 def start_worker(config_file: str, id_: int):
     """Start a worker with specified id and desired configuration"""
+    http_server_thread()
     config = config_common(config_file, f'worker{id_}')
     WorkerServicer(id_, config)
 
@@ -75,6 +86,7 @@ def start_worker(config_file: str, id_: int):
               help='Configuration file path of this project')
 def start_trainer(config_file):
     """Start a trainer with desired configuration"""
+    http_server_thread()
     config = config_common(config_file, 'trainer')
     TrainerServicer(config)
 

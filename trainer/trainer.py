@@ -10,6 +10,7 @@ import time
 from torch import Tensor
 
 from core.util import cached_func
+from core.healthy_check import set_health_status
 from master.master import Master
 from core.predictor import Predictor, NZPred
 from core.dag_dnn import DagDNN
@@ -49,6 +50,7 @@ class Trainer(Thread):
                                  self.__dag_dnn, lfcnz, logger=self.__logger)
         e_time = time.time()
         self.__logger.info(f"training time: {e_time - b_time:.2f}s")
+        set_health_status(True)
         self.__logger.info("train finished, predictors are ready")
         with self.__cv:
             self.__o_lcnz = o_lcnz

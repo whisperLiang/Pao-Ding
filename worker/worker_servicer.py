@@ -9,6 +9,7 @@ import grpc
 from core.ifr import IFR
 from core.dag_dnn import DagDNN
 from core.util import SerialTimer
+from core.healthy_check import set_health_status
 from rpc.msg_pb2 import IFRMsg, Rsp, Req, LayerCostMsg, FinishMsg, StageMsg, BandwidthMsg
 from rpc import msg_pb2_grpc
 from rpc.stub_factory import WStubFactory, GRPC_OPTIONS
@@ -66,6 +67,7 @@ class WorkerServicer(msg_pb2_grpc.WorkerServicer):
         msg_pb2_grpc.add_WorkerServicer_to_server(self, server)
         server.add_insecure_port('[::]:' + port)
         server.start()
+        set_health_status(True)
         self.logger.info("start serving...")
         try:
             server.wait_for_termination()
