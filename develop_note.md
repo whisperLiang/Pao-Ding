@@ -103,4 +103,7 @@
 - [x] mysheduler.py实现了基于ReLU，最大池化和平均池化层剪枝的动态规划算法
 ## 2024.4.24
 - [x] modify computational dependency graph function to plot
-- [x] mkdir a folder to store the computational dependency graph 
+- [x] mkdir a folder to store the computational dependency graph
+## 2024.6.20 
+- [x] create a http server for healthy-check
+- [x] create docker environments with dockerfile and docker compose
