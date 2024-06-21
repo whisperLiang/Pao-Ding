@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libegl1-mesa-dev \
     libgles2-mesa-dev \
-    libglib2.0-0
+    libglib2.0-0 \
+    curl
 
 # Set the working directory
 WORKDIR /Pao-Ding
