@@ -8,6 +8,20 @@ x-paoding-common: &paoding-common
 services:
   paoding-master:
     <<: *paoding-common
+    command: python3 main.py master
+    networks:
+      paoding-network:
+        ipv4_address: 174.28.0.250
+    depends_on:
+      paoding-trainer:
+        condition: service_healthy
+      paoding-worker0:
+        condition: service_healthy
+      paoding-worker1:
+        condition: service_healthy
+
+  paoding-trainer:
+    <<: *paoding-common
     command: python3 main.py trainer
     networks:
       paoding-network:
