@@ -4,6 +4,13 @@ x-paoding-common: &paoding-common
   volumes:
     - /home/yons/.cache/torch/hub/checkpoints:/root/.cache/torch/hub/checkpoints/
     - /home/yons/whisperliang/Pao-Ding:/Pao-Ding
+
+x-resources-common: &resources-common
+  deploy:
+    resources:
+      limits:
+        cpus: "0.5"
+        memory: 1G
   
 services:
   # # you can make the workfolw automatic by this script
@@ -41,6 +48,11 @@ services:
     networks:
       paoding-network:
         ipv4_address: 174.28.0.2
+    deploy:
+      resources:
+        limits:
+          cpus: "3"
+          memory: 2G  
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 10s
@@ -53,6 +65,7 @@ services:
     networks:
       paoding-network:
         ipv4_address: 174.28.0.3
+    <<: *resources-common
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 10s
@@ -65,6 +78,7 @@ services:
     networks:
       paoding-network:
         ipv4_address: 174.28.0.4
+    <<: *resources-common
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 10s
