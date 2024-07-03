@@ -1,80 +1,53 @@
 # Settings and configurations that are common for all containers
 x-paoding-common: &paoding-common
   image: pao-ding:1.0
+  volumes:
+    - /home/yons/.cache/torch/hub/checkpoints:/root/.cache/torch/hub/checkpoints/
+    - /home/yons/whisperliang/Pao-Ding:/Pao-Ding
   
 services:
   paoding-master:
     <<: *paoding-common
-    command: python3 main.py master
-    networks:
-      paoding-network:
-        ipv4_address: 172.28.0.250
-    depends_on:
-      paoding-trainer:
-        condition: service_healthy
-      paoding-worker0:
-        condition: service_healthy
-      paoding-worker1:
-        condition: service_healthy
-    # volumes:
-    #   - data1-1:/data1
-    #   - data1-2:/data2
-
-  paoding-trainer:
-    <<: *paoding-common
     command: python3 main.py trainer
     networks:
       paoding-network:
-        ipv4_address: 172.28.0.2
+        ipv4_address: 174.28.0.2
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 10s
       timeout: 5s
-      retries: 60
-    # volumes:
-    #   - data2-1:/data1
-    #   - data2-2:/data2
+      retries: 20
 
   paoding-worker0:
     <<: *paoding-common
     command: python3 main.py worker -i 0
     networks:
       paoding-network:
-        ipv4_address: 172.28.0.3
+        ipv4_address: 174.28.0.3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 10s
       timeout: 5s
       retries: 20
-    # volumes:
-    #   - data2-1:/data1
-    #   - data2-2:/data2
 
   paoding-worker1:
     <<: *paoding-common
     command: python3 main.py worker -i 1
     networks:
       paoding-network:
-        ipv4_address: 172.28.0.4
+        ipv4_address: 174.28.0.4
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 10s
       timeout: 5s
       retries: 20
-    # volumes:
-    #   - data2-1:/data1
-    #   - data2-2:/data2
 
 # volumes:
 #   data1-1:
-#   data1-2:
-#   data2-1:
-#   data2-2:
 
 networks:
   paoding-network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.28.0.0/24
-          gateway: 172.28.0.1
+        - subnet: 174.28.0.0/24
