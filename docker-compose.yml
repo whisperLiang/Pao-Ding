@@ -6,21 +6,36 @@ x-paoding-common: &paoding-common
     - /home/yons/whisperliang/Pao-Ding:/Pao-Ding
   
 services:
-  paoding-master:
-    <<: *paoding-common
-    command: python3 main.py master
-    networks:
-      paoding-network:
-        ipv4_address: 174.28.0.250
-    depends_on:
-      paoding-trainer:
-        condition: service_healthy
-      paoding-worker0:
-        condition: service_healthy
-      paoding-worker1:
-        condition: service_healthy
+  # # you can make the workfolw automatic by this script
+  # paoding-master:
+  #   <<: *paoding-common
+  #   command: "bash -c 'sleep 10 && python3 main.py master'"
+  #   networks:
+  #     paoding-network:
+  #       ipv4_address: 174.28.0.250
+  #   depends_on:
+  #     paoding-trainer:
+  #       condition: service_healthy
+  #     paoding-worker0:
+  #       condition: service_healthy
+  #     paoding-worker1:
+  #       condition: service_healthy
 
-  paoding-trainer:
+  # paoding-trainer:
+  #   <<: *paoding-common
+  #   command: python3 main.py trainer
+  #   networks:
+  #     paoding-network:
+  #       ipv4_address: 174.28.0.2
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8000"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 20
+
+  # execute python3 main.py master in docker paoding-master-trainer
+  # make sure that pumba script works
+  paoding-master-trainer:
     <<: *paoding-common
     command: python3 main.py trainer
     networks:
