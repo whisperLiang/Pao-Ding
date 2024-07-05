@@ -1,28 +1,29 @@
 # Configuration file path of logging
 log_cfg: logging.yml
 
+workers_num: 3
 # Local ports listened by each service
 port:
   master: 11111
-  trainer: 22210
-  worker: [33320, 33321]
+  trainer: 11112
+  worker: 11113
 # Network address when accessing. m, t, w0 correspond to master, trainer, worker0 respectively.
 net:
-  # for real local network
-  # m->t: '192.168.0.27:22210'
-  # m->w0: '192.168.0.114:33320'
-  # m->w1: '192.168.0.115:33321'
-  # # m->w2: '192.168.0.115:33322'
-  # w0->w1: '192.168.0.115:33321'
-  # # w1->w2: '192.168.0.115:33322' 
+  # # for real local network
+  # m->t: '192.168.0.27:11112'
+  # m->w0: '192.168.0.114:11113'
+  # m->w1: '192.168.0.115:11114'
+  # # m->w2: '192.168.0.115:11115'
+  # w0->w1: '192.168.0.115:11114'
+  # # w1->w2: '192.168.0.115:11115' 
 
   # for docker network
-  m->t: '174.28.0.2:22210'
-  m->w0: '174.28.0.3:33320'
-  m->w1: '174.28.0.4:33321'
-  # m->w2: '192.168.13.227:33322'
-  w0->w1: '174.28.0.4:33321'
-  # w1->w2: '192.168.13.227:33322' 
+  m->t: 174.28.0.2:11112
+  m->w0: 174.28.0.3:11113
+  m->w1: 174.28.0.4:11113
+  m->w2: 174.28.0.5:11113
+  w0->w1: 174.28.0.4:11113
+  w1->w2: 174.28.0.5:11113
 
 # DNN load function, use this to choose dnn
 dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_alexnet
@@ -49,7 +50,10 @@ master:
   itv_time: 0  # How long to wait after issuing an IFR, for debugging only. Normally it should be 0
   # len(bandwidth) must be equal to len(worker).
   # bandwidth[w] = bandwidth(MB) between w-1 and w. bandwidth[0] refers to master and worker0.
-  bandwidth: [4, 4]
+  bandwidth:
+  - 4
+  - 4
+  - 4
   # bandwidth: [3, 3, 3]
   scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
   # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler

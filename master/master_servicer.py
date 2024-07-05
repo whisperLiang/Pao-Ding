@@ -15,11 +15,11 @@ from rpc.stub_factory import MStubFactory, GRPC_OPTIONS
 class MasterServicer:
     def __init__(self, config: Dict[str, Any]):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.wk_addr = ['' for _ in range(len(config['port']['worker']))]
+        self.wk_addr = ['' for _ in range(config['workers_num'])]
         for rt, addr in config['net'].items():
             if rt.startswith('m->w'):
                 self.wk_addr[int(rt.replace('m->w', ''))] = addr
-        self.master = Master(len(config['port']['worker']), DagDNN(config['dnn_loader']()),
+        self.master = Master(config['workers_num'], DagDNN(config['dnn_loader']()),
                              config['video_path'], config['frame_size'], config['job'], config['check'],
                              MStubFactory(config), config['master'])
         threads = [threading.Thread(target=self.__report_finish_rev, args=(addr,), daemon=True) for addr in self.wk_addr]

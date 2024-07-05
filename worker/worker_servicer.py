@@ -26,7 +26,7 @@ class WorkerServicer(msg_pb2_grpc.WorkerServicer):
                              config['executor'], WStubFactory(worker_id, self.stg_rev_que, self.fsh_rev_que, config),
                              config['worker'])
         self.worker.start()
-        self.__serve(str(config['port']['worker'][worker_id]))
+        self.__serve(str(config['port']['worker']))
 
     def new_ifr(self, ifr_msg: IFRMsg, context: grpc.ServicerContext) -> Rsp:
         self.logger.info(f"finish transmit IFR{ifr_msg.id}", extra={'trace': True})

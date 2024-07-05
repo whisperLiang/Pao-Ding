@@ -116,7 +116,7 @@ class TrainerStub:
 
 class MStubFactory:
     def __init__(self, config: Dict[str, Any]):
-        wk_num = len(config['port']['worker'])
+        wk_num = config['workers_num']
         net_config = config['net']
         self.wk_chan: List[Optional[grpc.Channel]] = [None for _ in range(wk_num)]
         for route, addr in net_config.items():
@@ -141,7 +141,7 @@ class WStubFactory:
     """Worker的Stub工厂，用于创建Worker的Stub
     用于创建并管理与工作线程相关的gRPC stubs（存根）以及异步客户端。"""
     def __init__(self, id_: int, stg_rev_que: 'Queue[StageMsg]', fsh_rev_que: 'Queue[FinishMsg]', config: Dict[str, Any]):
-        wk_num = len(config['port']['worker'])
+        wk_num = config['workers_num']
         net_config = config['net']
         self.id = id_
         self.nwk_chan = None
