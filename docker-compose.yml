@@ -10,7 +10,7 @@ x-resources-common: &resources-common
     resources:
       limits:
         cpus: "0.5"
-        memory: 1G
+        memory: 512M
   
 services:
   # # you can make the workfolw automatic by this script
@@ -51,13 +51,13 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "3"
+          cpus: "4"
           memory: 2G  
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
+      interval: 3s
+      timeout: 3s
+      retries: 100
 
   paoding-worker0:
     <<: *paoding-common
@@ -68,8 +68,8 @@ services:
     <<: *resources-common
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 3s
       retries: 20
 
   paoding-worker1:
@@ -81,8 +81,8 @@ services:
     <<: *resources-common
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 3s
       retries: 20
 
 # volumes:
