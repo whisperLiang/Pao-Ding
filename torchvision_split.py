@@ -92,7 +92,7 @@ from torchvision.models.shufflenetv2 import ( # TODO: support channel shuffling
     shufflenet_v2_x2_0,
 )
 
-def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), dpi=300, cmap=None, title_fontsize=40, label_fontsize=40, tick_fontsize=40):
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), cmap=None, title_fontsize=40, label_fontsize=40, tick_fontsize=40):
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -117,7 +117,7 @@ def draw_computational_graph(layertopo, save_as, title='Computational Graph', fi
     plt.xticks(fontsize=tick_fontsize)
     plt.yticks(fontsize=tick_fontsize)
     fig.tight_layout()
-    plt.savefig(save_as, dpi=dpi)
+    plt.savefig(save_as)
     return fig, ax
 
 
@@ -152,8 +152,8 @@ if __name__ == "__main__":
         out_after, layer_topo = ms.forward_ll(dpg, example_inputs, ignored_blocks=ignored_layers)
         if torch.allclose(out_before, out_after):
             print(f"{model_name} splits success!")
-            fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.png', 
-                                               title=f'Computational Dependency Graph of {model_name}', figsize=(16, 16), dpi=300, cmap=None)
+            fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.eps', 
+                                               title=f'Dependency graph of {model_name}', figsize=(16, 16), cmap=None)
             return True
         else:
             print(f"{model_name} splits failed!")
