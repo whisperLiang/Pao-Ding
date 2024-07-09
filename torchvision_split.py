@@ -92,7 +92,7 @@ from torchvision.models.shufflenetv2 import ( # TODO: support channel shuffling
     shufflenet_v2_x2_0,
 )
 
-def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), cmap=None, title_fontsize=40, label_fontsize=40, tick_fontsize=40):
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), cmap=None, title_fontsize=50, label_fontsize=50, tick_fontsize=42):
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
