@@ -152,7 +152,7 @@ if __name__ == "__main__":
         out_after, layer_topo = ms.forward_ll(dpg, example_inputs, ignored_blocks=ignored_layers)
         if torch.allclose(out_before, out_after):
             print(f"{model_name} splits success!")
-            fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.eps', 
+            fig, ax = draw_computational_graph(layer_topo, save_as=f'computational_graph/{model_name}_computational_graph.png', 
                                                title=f'Dependency graph of {model_name}', figsize=(16, 16), cmap=None)
             return True
         else:
