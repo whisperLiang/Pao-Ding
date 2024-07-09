@@ -8,15 +8,16 @@ def generate_worker_config(ip):
     return f"""
   paoding-worker{ip}:
     <<: *paoding-common
+    cpuset: "{ip//4 + 10}"
     command: python3 main.py worker -i {ip}
     networks:
       paoding-network:
         ipv4_address: 174.28.0.{ip+3}
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail http://localhost:8000 || exit 1"]
-      interval: 10s
+      interval: 7s
       timeout: 5s
-      retries: 20
+      retries: 100
 """
 
 def generate_docker_compose(num_workers):
@@ -31,8 +32,8 @@ x-paoding-common: &paoding-common
   deploy:
     resources:
       limits:
-        cpus: "1.0"
-        memory: 1G  
+        cpus: "0.25"
+        memory: 2G  
 
 networks:
   paoding-network:
@@ -44,6 +45,7 @@ networks:
 services:
   paoding-master-trainer:
     image: pao-ding:1.0
+    cpuset: "8-9"
     volumes:
       - /home/yons/.cache/torch/hub/checkpoints:/root/.cache/torch/hub/checkpoints/
       - /home/yons/whisperliang/Pao-Ding:/Pao-Ding
@@ -54,17 +56,17 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2.0"
-          memory: 2G
+          cpus: "2"
+          memory: 4G
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail http://localhost:8000 || exit 1"]
-      interval: 10s
+      interval: 7s
       timeout: 5s
-      retries: 20
+      retries: 100
 """
 
     # Generate worker configurations
-    worker_configs = "".join(generate_worker_config(i) for i in range(num_workers))
+    worker_configs = "".join(generate_worker_config(i) for i in range(num_workers-1, -1, -1))
 
     # Combine base services with worker configurations
     full_compose = base_services + worker_configs
@@ -100,7 +102,7 @@ if __name__ == "__main__":
 
     temp_compose_path = "temp_docker-compose.yml"
     net_path = "net.yml"
-    bw = 4
+    bw = 10
     compose_content = generate_docker_compose(num_workers)
     generate_net_config(net_path, num_workers, bw)
 

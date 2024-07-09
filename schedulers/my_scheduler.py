@@ -67,7 +67,7 @@ class MyScheduler(Scheduler):
         :return ifr_group ifr_group[i]对应ipt_group[i]
         """
         # 获取各个worker的实时上传带宽
-        online_bwths = False
+        online_bwths = True
         if online_bwths:
             wk_bwths = [0. for _ in self.__wk_bwth]
             for wid in range(len(self.__wk_bwth)):
