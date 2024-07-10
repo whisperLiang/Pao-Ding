@@ -37,7 +37,7 @@ class Worker(Thread):
         costs = cached_func(f"w{id_}.{dag_dnn.model_name}.{frame_size[0]}x{frame_size[1]}.cst", self.profile_dnn_cost,
                             dag_dnn, frame_size, config['prof_niter'], logger=self.__logger)
         bandwidth_info = os.urandom(int(1024 * 1024 * 1))  # Generate 1MB of random data
-        self.__logger.info(f"layer_costs={costs}")
+        self.__logger.info(f"layer_costs={costs},total_cost={sum(costs)}")
         with self.__cv:
             self.__costs = costs
             self.__bandwidth = bandwidth_info
