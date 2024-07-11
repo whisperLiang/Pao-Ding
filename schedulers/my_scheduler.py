@@ -175,7 +175,7 @@ class MyScheduler(Scheduler):
             return res, cost
         opt_wk_elys, opt_cost = [], float('inf')
         for my_last in layers_to_recur:  # 只处理指定的层
-            if my_last < last_ly or my_last >= ly_num:
+            if my_last <= last_ly or my_last >= ly_num:
                 continue
             wk_elys.append(list(range(last_ly+1, my_last+1)))
             cad_wk_elys, cad_cost = cls.recur_find_prune(wk_elys, metric)
