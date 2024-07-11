@@ -50,8 +50,8 @@ ax1.tick_params(axis='both', which='major', labelsize=14)
 ax2.tick_params(axis='both', which='major', labelsize=14)
 
 # 添加图例
-ax1.legend(loc='upper right', bbox_to_anchor=(1.0, 1.0))
-ax2.legend(loc='upper right', bbox_to_anchor=(1.0, 0.85))
+ax1.legend(loc='upper right', bbox_to_anchor=(1.0, 1.0), fontsize=14)
+ax2.legend(loc='upper right', bbox_to_anchor=(1.0, 0.8), fontsize=14)
 
 # 添加刻度标签
 plt.xticks(index, bandwidths)
