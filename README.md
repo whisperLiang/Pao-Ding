@@ -63,3 +63,11 @@ python3 gen_compose_net.py <workers_num>
 最后你可以通过docker-compose -f temp_docker-compose.yml up -d启动自定义数量的容器节点。
 其余操作你可以参考自定义配置的操作。
 需要注意的是，如果容器节点启动失败，你需要自己手动修改temp_docker-compose.yml文件中的资源配置。
+
+## Citation
+
+本项目主要参考了以下三个项目:
+[ResMap](https://github.com/nju-cn/ResMap)
+[Torch-Pruning](https://github.com/VainF/Torch-Pruning)
+[Pumba](https://github.com/alexei-led/pumba)
+
