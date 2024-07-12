@@ -38,7 +38,7 @@ for i, txt in enumerate(best_split_points):
     ax2.annotate(txt, (i, txt), textcoords="offset points", xytext=(0,3), ha='center')
 
 # 设置第二个y轴的标签
-ax2.set_ylabel('DNN Index', fontsize=16)
+ax2.set_ylabel('Layer Index', fontsize=16)
 
 # 添加标题和标签
 plt.title('Pipeline execution with different bandwidths', fontsize=16)
