@@ -28,8 +28,9 @@ pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## 实际网络环境
 
 ### 运行
-具体运行方式可以参考ResMap的README.md：[ResMap](https://github.com/nju-cn/ResMap)
-主要是需要关注拓扑结构中的节点的启动顺序以及config.yml文件处的修改
+具体运行方式可以参考[ResMap](https://github.com/nju-cn/ResMap)的README.md。
+
+主要是需要关注拓扑结构中的节点的启动顺序以及config.yml文件处的修改。
 
 ## Docker仿真环境
 
