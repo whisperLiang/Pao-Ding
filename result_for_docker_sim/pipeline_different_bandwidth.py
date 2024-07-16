@@ -43,7 +43,7 @@ ax2.set_ylabel('Layer Index', fontsize=16)
 # 添加标题和标签
 plt.title('Pipeline execution with different bandwidths', fontsize=16)
 ax1.set_xlabel('Bandwidth (Mbps)', fontsize=16)
-ax1.set_ylabel('Time (seconds)', fontsize=16)
+ax1.set_ylabel('Time (s)', fontsize=16)
 
 # 设置坐标轴刻度的字体大小
 ax1.tick_params(axis='both', which='major', labelsize=14)

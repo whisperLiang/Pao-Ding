@@ -25,8 +25,8 @@ bars2 = ax2.bar(x_positions2, values2, color='lightblue', width=bar_width, align
 
 # 设置标题和标签
 ax1.set_xlabel('Schemes', fontsize=16)
-ax1.set_ylabel('trainning time/s', fontsize=16)
-ax2.set_ylabel('inference time/ms', fontsize=16)
+ax1.set_ylabel('trainning time(s)', fontsize=16)
+ax2.set_ylabel('inference time(ms)', fontsize=16)
 
 # 设置x轴的刻度位置和标签
 ax1.set_xticks(0.5 * np.arange(len(categories)))
