@@ -10,7 +10,7 @@ plt.bar(workers_num, average_inference, color='lightgreen')
 # 添加标题和标签
 plt.title('Average inference time over different workers', fontsize=16)
 plt.xlabel('Workers number', fontsize=16)
-plt.ylabel('Average inference time(s)', fontsize=16)
+plt.ylabel('Average inference time (s)', fontsize=16)
 plt.tick_params(axis='both', labelsize=14)
 
 # 显示图形
