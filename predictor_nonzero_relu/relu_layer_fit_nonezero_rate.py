@@ -42,7 +42,7 @@ def draw_predictor(predictor: Predictor, i_fcnz: List[List[float]], o_fnz: List[
         p_fnz[f] = sum(p_cnz) / len(p_cnz)
     i_fnz = [sum(cnz)/len(cnz) for cnz in i_fcnz]
     xarr, yarr = list(zip(*sorted(zip(i_fnz, p_fnz))))
-    ax.plot(xarr, yarr, 'r-')
+    ax.plot(xarr, yarr, 'g-')
     ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(np.array(o_fnz)-np.array(p_fnz)))), 2)}")
 
 
@@ -57,7 +57,7 @@ def draw_fit3(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     lr.fit(X_tr, y)
     y_pred = lr.predict(X_tr)
     xarr, yarr = list(zip(*sorted(zip(i_fnz, y_pred))))
-    ax.plot(xarr, yarr, 'r-')
+    ax.plot(xarr, yarr, 'g-')
     ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(np.array(o_fnz)-y_pred))), 2)}")
 
 
@@ -70,7 +70,7 @@ def draw_mlp(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     mlp.fit(X, y)
     y_pred = mlp.predict(X)
     xarr, yarr = list(zip(*sorted(zip(i_fnz, y_pred))))
-    ax.plot(xarr, yarr, 'r-')
+    ax.plot(xarr, yarr, 'g-')
     ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(y - y_pred))), 2)}")
 
 
@@ -83,7 +83,7 @@ def draw_logistic(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     func = lambda x, k, p, r: (k*p*np.exp(r*x))/(k+p*(np.exp(r*x)-1))  # logistic函数
     popt, pcov = curve_fit(func, xarr, yarr, maxfev=50000)
     yarr_pred = func(xarr, *popt)
-    ax.plot(xarr, yarr_pred, 'r-', label='Logistic Fit')
+    ax.plot(xarr, yarr_pred, 'g-', label='Logistic Fit')
     # ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(yarr - yarr_pred))), 2)}")
 
 lg = {'size': 20}
@@ -127,7 +127,7 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
                         c=[i / nframe for i in range(nframe-1)],
                         marker='.', cmap='viridis')
         else:
-            plt.scatter(i_fnz, o_fnz, s=2)
+            plt.scatter(i_fnz, o_fnz, s=2, c='lightblue')
         if predictors is not None:
             draw_predictor(predictors[l], i_fnz, o_fnz, ax)
         if fit == 'fit3':
