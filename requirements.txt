@@ -16,8 +16,9 @@ PyYAML>=5.3
 # Because the Predictor trained by sklearn needs to be transferred between Master and Trainer, the same version must be used.
 scikit_learn
 scipy>=1.1.0
-# matplotlib==3.3.2  # Only used when debugging
+matplotlib
 tqdm>=4.50.2
+statsmodels
 # The Raspberry Pi will fail when installing the following two. You need to download the wheel and install it manually.
 # torch==1.7.0
 # torchvision==0.8.0

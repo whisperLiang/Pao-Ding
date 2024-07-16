@@ -107,9 +107,9 @@ def draw_computational_graph(layertopo, save_as, title='Computational Graph', fi
                 G[node2idx[out_node], node2idx[node]] = fill_value
                 G[node2idx[node], node2idx[out_node]] = fill_value
     fig, ax = plt.subplots(figsize=(figsize))
-    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
-    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
-    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
+    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Greens'))
+    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, linewidth=0.1)
+    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, linewidth=0.1)
     if title is not None:
         ax.set_title(title, fontsize=title_fontsize)
     plt.xlabel('Layer Index', fontsize=label_fontsize)
