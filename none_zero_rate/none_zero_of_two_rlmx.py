@@ -137,7 +137,6 @@ if __name__ == '__main__':
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.legend()
 
     # 绘制 VGG16 图
     plt.subplot(222)
@@ -153,7 +152,6 @@ if __name__ == '__main__':
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.legend()
 
     # 绘制 ResNet50 图
     plt.subplot(223)
@@ -171,7 +169,6 @@ if __name__ == '__main__':
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.legend()
 
     # 绘制 GoogLeNet 图
     plt.subplot(224)
@@ -187,7 +184,6 @@ if __name__ == '__main__':
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.legend()
 
     # 调整布局并保存图像
     plt.tight_layout()
