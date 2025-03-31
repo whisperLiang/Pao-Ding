@@ -62,14 +62,8 @@ def heatmap(r_layers: List[Node], lfnz: List[List[float]], thres: float = .495):
     cbar.set_label('Number of Frames', fontproperties=lg)
     plt.text(7, 0.5, r'$threshold=\eta$', ha='center', va='bottom', fontsize=15)
     plt.show()
-    #画CDF图
-    plt.figure(figsize=(6, 5))
-    nzr, x_ = hist_cdf(y,[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1])
-    print(nzr,x_)
-    plt.plot(x_, nzr, 'o-', linewidth=3, label='Festive', zorder=10)
-    plt.show()
 
-def generate_data(CNN_NAME,ORIGINAL):
+def generate_data(CNN_NAME, ORIGINAL):
     VIDEO_NAME = 'parking'  # road, campus, parking
     RESOLUTION = '480x720'  # 数据集的分辨率
     NFRAME_TOTAL = 400  # 数据集中的帧数
@@ -88,118 +82,114 @@ def generate_data(CNN_NAME,ORIGINAL):
     lfnz = lfcnz2lfnz(lfcnz)
     nlayer = len(lfnz)  # 层数
     nframe = len(lfnz[0])  # 帧数
-    x, y = [], []  # 每个点为一帧，x为该帧数据所在层，y为该帧数据的非零占比
+
+    # 分别存储 ReLU 层和其他层的数据
+    x_relu, y_relu = [], []
+    x_other, y_other = [], []
+
     for l in range(len(r_layers)):
-        if isinstance(r_layers[l].module, (ReLU)):
-            x.extend([l] * nframe)
-            y.extend(lfnz[l])
-    sps_cnt = 0
-    for yelm in y:
-        if yelm < .5:
-            sps_cnt += 1
-    print(CNN_NAME,nlayer)
+        if isinstance(r_layers[l].module, ReLU):
+            x_relu.extend([l] * nframe)
+            y_relu.extend(lfnz[l])
+        else:
+            x_other.extend([l] * nframe)
+            y_other.extend(lfnz[l])
+
+    # 分别计算稀疏率
+    sps_cnt_relu = sum(1 for yelm in y_relu if yelm < .5)
+    sps_cnt_other = sum(1 for yelm in y_other if yelm < .5)
+
     xedges = [-0.5] + [l + 0.5 for l in range(nlayer)]
     yedges = [0.] + [1 / nlayer * l for l in range(1, nlayer + 1)]
-    return x,y,xedges,yedges,nlayer,nframe,sps_cnt
+
+    return x_relu, y_relu, x_other, y_other, xedges, yedges, nlayer, nframe, sps_cnt_relu, sps_cnt_other
 
 if __name__ == '__main__':
-    CNN_NAME = 'AlexNet'  #AlexNet, VGG, GoogLeNet, ResNet
     ORIGINAL = False  # False为差值数据LFCNZ，True为原始数据OLFCNZ
-    x_ax, y_ax, xedges_ax, yedges_ax, nlayer_ax, nframe_ax, sps_cnt_ax= generate_data('AlexNet', ORIGINAL)
-    x_vgg, y_vgg, xedges_vgg, yedges_vgg, nlayer_vgg, nframe_vgg, sps_cnt_vgg = generate_data('VGG', ORIGINAL)
-    x_gn, y_gn, xedges_gn, yedges_gn, nlayer_gn, nframe_gn, sps_cnt_gn = generate_data('GoogLeNet', ORIGINAL)
-    x_res, y_res, xedges_res, yedges_res, nlayer_res, nframe_res, sps_cnt_res = generate_data('ResNet', ORIGINAL)
-    plt.figure(figsize=(6, 5))
 
+    # 处理 AlexNet 数据
+    x_relu_ax, y_relu_ax, x_other_ax, y_other_ax, xedges_ax, yedges_ax, nlayer_ax, nframe_ax, sps_cnt_relu_ax, sps_cnt_other_ax = generate_data('AlexNet', ORIGINAL)
+
+    # 处理 VGG16 数据
+    x_relu_vgg, y_relu_vgg, x_other_vgg, y_other_vgg, xedges_vgg, yedges_vgg, nlayer_vgg, nframe_vgg, sps_cnt_relu_vgg, sps_cnt_other_vgg = generate_data('VGG', ORIGINAL)
+
+    # 处理 GoogLeNet 数据
+    x_relu_gn, y_relu_gn, x_other_gn, y_other_gn, xedges_gn, yedges_gn, nlayer_gn, nframe_gn, sps_cnt_relu_gn, sps_cnt_other_gn = generate_data('GoogLeNet', ORIGINAL)
+
+    # 处理 ResNet50 数据
+    x_relu_res, y_relu_res, x_other_res, y_other_res, xedges_res, yedges_res, nlayer_res, nframe_res, sps_cnt_relu_res, sps_cnt_other_res = generate_data('ResNet', ORIGINAL)
+
+    # 创建图形
+    plt.figure(figsize=(12, 10))
+
+    # 绘制 AlexNet 图
     plt.subplot(221)
     plt.tick_params(labelsize=13)
     plt.title('AlexNet')
-    plt.hist2d(x_ax, y_ax, bins=(xedges_ax, yedges_ax), cmap='Greens')
+    plt.hist2d(x_relu_ax, y_relu_ax, bins=(xedges_ax, yedges_ax), cmap='Greens', label='ReLU')
+    plt.hist2d(x_other_ax, y_other_ax, bins=(xedges_ax, yedges_ax), cmap='Reds', alpha=0.6, label='Other')
     plt.plot([0, nlayer_ax - 1], [0.5, 0.5], linestyle='--')
-    sparse = round(sps_cnt_ax/(len(x_ax))*100, 1)
-    print(f'sparse={sps_cnt_ax}/{len(x_ax)}={sparse}%')
-    #plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
+    sparse_relu = round(sps_cnt_relu_ax / len(x_relu_ax) * 100, 1)
+    sparse_other = round(sps_cnt_other_ax / len(x_other_ax) * 100, 1)
+    plt.text(4, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
+    plt.text(4, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
     plt.gca().set_ylabel('Nonzero-rate', fontproperties=lg)
-    cbar = plt.colorbar(ticks=[])
-    #cbar.ax.tick_params(labelsize=13)
-    #cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.text(16, 0.23, f'{sparse}%', ha='center', va='bottom', fontsize=12)
-    plt.quiver(16, 0.5, 0, -1, color='b', scale=5, width=0.02)
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=13)
+    cbar.set_label('Number of Frames', fontproperties=lg)
+    plt.legend()
 
+    # 绘制 VGG16 图
     plt.subplot(222)
     plt.tick_params(labelsize=13)
     plt.title('VGG16')
-    plt.hist2d(x_vgg, y_vgg, bins=(xedges_vgg, yedges_vgg), cmap='Greens')
+    plt.hist2d(x_relu_vgg, y_relu_vgg, bins=(xedges_vgg, yedges_vgg), cmap='Greens', label='ReLU')
+    plt.hist2d(x_other_vgg, y_other_vgg, bins=(xedges_vgg, yedges_vgg), cmap='Reds', alpha=0.6, label='Other')
     plt.plot([0, nlayer_vgg - 1], [0.5, 0.5], linestyle='--')
-    sparse = round(sps_cnt_vgg / (len(x_vgg)) * 100, 1)
-    print(f'sparse={sps_cnt_vgg}/{len(x_vgg)}={sparse}%')
-    #plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
-    #plt.gca().set_ylabel('Nonzero Rate', fontproperties=lg)
+    sparse_relu = round(sps_cnt_relu_vgg / len(x_relu_vgg) * 100, 1)
+    sparse_other = round(sps_cnt_other_vgg / len(x_other_vgg) * 100, 1)
+    plt.text(8, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
+    plt.text(8, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.text(23, 0.23, f'{sparse}%', ha='center', va='bottom', fontsize=12)
-    plt.quiver(22, 0.5, 0, -1, color='b', scale=5, width=0.02)
+    plt.legend()
 
-
+    # 绘制 ResNet50 图
     plt.subplot(223)
     plt.tick_params(labelsize=13)
     plt.title('ResNet50')
-    plt.hist2d(x_res, y_res, bins=(xedges_res, yedges_res), cmap='Greens')
+    plt.hist2d(x_relu_res, y_relu_res, bins=(xedges_res, yedges_res), cmap='Greens', label='ReLU')
+    plt.hist2d(x_other_res, y_other_res, bins=(xedges_res, yedges_res), cmap='Reds', alpha=0.6, label='Other')
     plt.plot([0, nlayer_res - 1], [0.5, 0.5], linestyle='--')
-    sparse = round(sps_cnt_res / (len(x_res)) * 100, 1)
-    print(f'sparse={sps_cnt_res}/{len(x_res)}={sparse}%')
+    sparse_relu = round(sps_cnt_relu_res / len(x_relu_res) * 100, 1)
+    sparse_other = round(sps_cnt_other_res / len(x_other_res) * 100, 1)
+    plt.text(35, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
+    plt.text(35, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
     plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
     plt.gca().set_ylabel('Nonzero-rate', fontproperties=lg)
-    cbar = plt.colorbar(ticks=[])
-    cbar.ax.tick_params(labelsize=13)
-    #cbar.set_label('Number of Frames', fontproperties=lg)
-    #plt.text(20, 0.5, r'$threshold=\eta$', ha='center', va='bottom', fontsize=15)
-    plt.text(30, 0.09, f'{sparse}%', ha='center', va='bottom', fontsize=12)
-    plt.quiver(20, 0.5, 0, -1, color='b', scale=3, width=0.02)
-    plt.tight_layout()
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.4)
-
-    plt.subplot(224)
-    plt.tick_params(labelsize=13)
-    plt.title('GoogLeNet')
-    plt.hist2d(x_gn, y_gn, bins=(xedges_gn, yedges_gn), cmap='Greens')
-    plt.plot([0, nlayer_gn - 1], [0.5, 0.5], linestyle='--')
-    sparse = round(sps_cnt_gn / (len(x_gn)) * 100, 1)
-    print(f'sparse={sps_cnt_gn}/{len(x_gn)}={sparse}%')
-    plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
-    #plt.gca().set_ylabel('NZR', fontproperties=lg)
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
-    plt.text(30, 0.09, f'{sparse}%', ha='center', va='bottom', fontsize=12)
-    plt.quiver(20, 0.5, 0, -1, color='b', scale=3, width=0.02)
-    # plt.show()
-    plt.savefig('none zero rate of two rl.png')
+    plt.legend()
 
+    # 绘制 GoogLeNet 图
+    plt.subplot(224)
+    plt.tick_params(labelsize=13)
+    plt.title('GoogLeNet')
+    plt.hist2d(x_relu_gn, y_relu_gn, bins=(xedges_gn, yedges_gn), cmap='Greens', label='ReLU')
+    plt.hist2d(x_other_gn, y_other_gn, bins=(xedges_gn, yedges_gn), cmap='Reds', alpha=0.6, label='Other')
+    plt.plot([0, nlayer_gn - 1], [0.5, 0.5], linestyle='--')
+    sparse_relu = round(sps_cnt_relu_gn / len(x_relu_gn) * 100, 1)
+    sparse_other = round(sps_cnt_other_gn / len(x_other_gn) * 100, 1)
+    plt.text(35, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
+    plt.text(35, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=13)
+    cbar.set_label('Number of Frames', fontproperties=lg)
+    plt.legend()
 
-    #画CDF图
-    plt.figure(figsize=(6, 5))
-    nzr_ax, xax = hist_cdf(y_ax,[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1])
-    nzr_vgg, xvgg = hist_cdf(y_vgg,[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1])
-    nzr_gn, xgn = hist_cdf(y_gn,[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1])
-    nzr_res, xres = hist_cdf(y_res,[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1])
-    lowess = sm.nonparametric.lowess
-    # nzr_ax = savgol_filter(nzr_ax, 5, 3, mode='nearest')
-    # nzr_vgg = savgol_filter(nzr_vgg, 5, 3, mode='nearest')
-    # nzr_gn = savgol_filter(nzr_gn, 5, 3, mode='nearest')
-    # nzr_res = savgol_filter(nzr_res, 5, 3, mode='nearest')
-    plt.tick_params(labelsize=18)
-    plt.plot(xax, nzr_ax, 'o-', linewidth=2, label='AlexNet', zorder=10)
-    plt.plot(xvgg, nzr_vgg, 'v-', linewidth=2, label='VGG16', zorder=10)
-    plt.plot(xgn, nzr_gn, 'o--', linewidth=2, label='GoogLeNet', zorder=10)
-    plt.plot(xres, nzr_res, '^:', linewidth=2, label='ResNet', zorder=10)
-  #  plt.plot([0.5,0.5],[0,1], 'o--',linewidth=2, color='orchid')
-    plt.legend(loc='best',fontsize=18)
-    plt.xlabel('Nonzero-rate Distribution', fontsize=18)
-    plt.ylabel('CDF', fontsize=18)
-   # plt.grid(axis="y", linestyle='-.', zorder=0)
-    #plt.quiver(0.5, 0.5, -1, 0, color='r', scale=4, width=0.02)
-   # plt.text(0.5, 0.1, 'better', fontsize=20, )
-    # plt.show()
-    plt.savefig('none zero rate of two cdf.png')
+    # 调整布局并保存图像
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    plt.savefig('none_zero_rate_of_two_rlmx.png')
