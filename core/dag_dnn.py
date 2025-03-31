@@ -231,7 +231,7 @@ class DagDNN:
                 for inodelist in root.inputs:
                     for node in inodelist:
                         if node in node2index and results[node2index[node]] is not None: # 不为空，已计算出
-                            inputs.append(results[node2index[node]])
+                            inputs.append(results[node2index[node]].clone().detach())
                 with torch.no_grad():
                     results[node2index[root]] = root.forward(inputs[0] if len(inputs) == 1 else inputs)  # 将所有前驱结果作为输入
         return results
