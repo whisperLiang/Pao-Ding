@@ -120,7 +120,7 @@ if __name__ == '__main__':
     x_relu_res, y_relu_res, x_other_res, y_other_res, xedges_res, yedges_res, nlayer_res, nframe_res, sps_cnt_relu_res, sps_cnt_other_res = generate_data('ResNet', ORIGINAL)
 
     # 创建图形
-    plt.figure(figsize=(12, 10))
+    plt.figure(figsize=(10, 8))
 
     # 绘制 AlexNet 图
     plt.subplot(221)
@@ -135,8 +135,8 @@ if __name__ == '__main__':
     plt.text(4, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
     plt.gca().set_ylabel('Nonzero-rate', fontproperties=lg)
     cbar = plt.colorbar()
-    cbar.ax.tick_params(labelsize=13)
-    cbar.set_label('Number of Frames', fontproperties=lg)
+    cbar.set_ticks([])  # 隐藏刻度横线和刻度文字
+    # cbar.set_label('Number of Frames', fontproperties=lg)
 
     # 绘制 VGG16 图
     plt.subplot(222)
@@ -152,6 +152,7 @@ if __name__ == '__main__':
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
+    plt.gca().tick_params(left=False, labelleft=False)  # 去除左边刻度线和刻度文字
 
     # 绘制 ResNet50 图
     plt.subplot(223)
@@ -167,8 +168,8 @@ if __name__ == '__main__':
     plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
     plt.gca().set_ylabel('Nonzero-rate', fontproperties=lg)
     cbar = plt.colorbar()
-    cbar.ax.tick_params(labelsize=13)
-    cbar.set_label('Number of Frames', fontproperties=lg)
+    cbar.set_ticks([])  # 隐藏刻度横线和刻度文字
+    # cbar.set_label('Number of Frames', fontproperties=lg)
 
     # 绘制 GoogLeNet 图
     plt.subplot(224)
@@ -184,8 +185,9 @@ if __name__ == '__main__':
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
+    plt.gca().tick_params(left=False, labelleft=False)  # 去除左边刻度线和刻度文字
 
     # 调整布局并保存图像
     plt.tight_layout()
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    plt.subplots_adjust(wspace=0.0, hspace=0.18)
     plt.savefig('none_zero_rate_of_two_rlmx.png')
