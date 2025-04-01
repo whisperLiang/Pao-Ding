@@ -10,7 +10,7 @@ from matplotlib.ticker import MaxNLocator
 
 from core.dag_dnn import DagDNN
 from model_split import Node
-from dnn_models.any_dnn_split import prepare_alexnet, prepare_vgg16, prepare_resnet50, prepare_googlenet
+from dnn_models.any_dnn_split import prepare_alexnet, prepare_vgg16, prepare_resnet18, prepare_googlenet
 import numpy as np
 from torch.nn import ReLU, MaxPool2d
 plt.rc('font',family='Times New Roman')
@@ -67,7 +67,7 @@ def generate_data(CNN_NAME, ORIGINAL):
     cnn_loaders = {'AlexNet': prepare_alexnet,
                    'VGG': prepare_vgg16,
                    'GoogLeNet': prepare_googlenet,
-                   'ResNet': prepare_resnet50}
+                   'ResNet': prepare_resnet18}
     dag_dnn = DagDNN(cnn_loaders[CNN_NAME]())
     r_layers = dag_dnn.layers
     with open(file_name, 'rb') as f:
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     # 处理 GoogLeNet 数据
     x_relu_gn, y_relu_gn, x_other_gn, y_other_gn, xedges_gn, yedges_gn, nlayer_gn, nframe_gn, sps_cnt_relu_gn, sps_cnt_other_gn = generate_data('GoogLeNet', ORIGINAL)
 
-    # 处理 ResNet50 数据
+    # 处理 ResNet18 数据
     x_relu_res, y_relu_res, x_other_res, y_other_res, xedges_res, yedges_res, nlayer_res, nframe_res, sps_cnt_relu_res, sps_cnt_other_res = generate_data('ResNet', ORIGINAL)
 
     # 创建图形
@@ -151,17 +151,17 @@ if __name__ == '__main__':
     cbar.set_label('Number of Frames', fontproperties=lg)
     plt.gca().tick_params(left=False, labelleft=False)  # 去除左边刻度线和刻度文字
 
-    # 绘制 ResNet50 图
+    # 绘制 ResNet18 图
     plt.subplot(223)
     plt.tick_params(labelsize=13)
-    plt.title('ResNet50')
+    plt.title('ResNet18')
     plt.hist2d(x_relu_res, y_relu_res, bins=(xedges_res, yedges_res), cmap='Greens', label='ReLU')
     plt.hist2d(x_other_res, y_other_res, bins=(xedges_res, yedges_res), cmap='Reds', alpha=0.6, label='Other')
     plt.plot([0, nlayer_res - 1], [0.5, 0.5], linestyle='--')
     sparse_relu = round(sps_cnt_relu_res / len(x_relu_res) * 100, 1)
     sparse_other = round(sps_cnt_other_res / len(x_other_res) * 100, 1)
-    plt.text(35, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
-    plt.text(35, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
+    plt.text(15, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
+    plt.text(15, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
     plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
     plt.gca().set_ylabel('Nonzero-rate', fontproperties=lg)
     cbar = plt.colorbar()
