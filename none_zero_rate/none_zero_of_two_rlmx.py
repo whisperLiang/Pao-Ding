@@ -131,8 +131,8 @@ if __name__ == '__main__':
     plt.plot([0, nlayer_ax - 1], [0.5, 0.5], linestyle='--')
     sparse_relu = round(sps_cnt_relu_ax / len(x_relu_ax) * 100, 1)
     sparse_other = round(sps_cnt_other_ax / len(x_other_ax) * 100, 1)
-    plt.text(4, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
-    plt.text(4, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
+    plt.text(6, 0.07, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
+    plt.text(6, 0.03, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
     plt.gca().set_ylabel('Nonzero-rate', fontproperties=lg)
     cbar = plt.colorbar()
     cbar.set_ticks([])  # 隐藏刻度横线和刻度文字
@@ -182,6 +182,7 @@ if __name__ == '__main__':
     sparse_other = round(sps_cnt_other_gn / len(x_other_gn) * 100, 1)
     plt.text(35, 0.09, f'ReLU: {sparse_relu}%', ha='center', va='bottom', fontsize=12, color='green')
     plt.text(35, 0.05, f'Other: {sparse_other}%', ha='center', va='bottom', fontsize=12, color='red')
+    plt.gca().set_xlabel('CNN Layer Index', fontproperties=lg)
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=13)
     cbar.set_label('Number of Frames', fontproperties=lg)
