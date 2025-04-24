@@ -58,7 +58,9 @@ def draw_fit3(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     y_pred = lr.predict(X_tr)
     xarr, yarr = list(zip(*sorted(zip(i_fnz, y_pred))))
     ax.plot(xarr, yarr, 'g-')
-    ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(np.array(o_fnz)-y_pred))), 2)}")
+    err_value = round(float(np.sum(np.abs(np.array(o_fnz)-y_pred))), 2)
+    ax.text(0.95, 0.95, f"err={err_value}", transform=ax.transAxes, fontsize=18,
+            verticalalignment='top', horizontalalignment='right')
 
 
 def draw_mlp(i_fnz: List[float], o_fnz: List[float], ax: Axes):
@@ -71,7 +73,9 @@ def draw_mlp(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     y_pred = mlp.predict(X)
     xarr, yarr = list(zip(*sorted(zip(i_fnz, y_pred))))
     ax.plot(xarr, yarr, 'g-')
-    ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(y - y_pred))), 2)}")
+    err_value = round(float(np.sum(np.abs(y - y_pred))), 2)
+    ax.text(0.95, 0.95, f"err={err_value}", transform=ax.transAxes, fontsize=18,
+            verticalalignment='top', horizontalalignment='right')
 
 
 def draw_logistic(i_fnz: List[float], o_fnz: List[float], ax: Axes):
@@ -84,11 +88,13 @@ def draw_logistic(i_fnz: List[float], o_fnz: List[float], ax: Axes):
     popt, pcov = curve_fit(func, xarr, yarr, maxfev=50000)
     yarr_pred = func(xarr, *popt)
     ax.plot(xarr, yarr_pred, 'g-', label='Logistic Fit')
-    # ax.set_xlabel(ax.get_xlabel() + f" err={round(float(np.sum(np.abs(yarr - yarr_pred))), 2)}")
+    err_value = round(float(np.sum(np.abs(yarr - yarr_pred))), 2)
+    ax.text(0.95, 0.95, f"err={err_value}", transform=ax.transAxes, fontsize=18,
+            verticalalignment='top', horizontalalignment='right')
 
 lg = {'size': 20}
 
-def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_scale: bool, show_seq: bool,
+def target_layers_in_out_relu(cnn_name: str, target_type: Type[torch.nn.Module], uni_scale: bool, show_seq: bool,
                   r_layers: List[Node], lfcnz: List[List[List[float]]], fit: str = None):
     """对于特定类型的所有层，显示输入和输出的关联。一个窗口展示3*5=15个层的数据
     target_type为要查看的layer类型
@@ -116,6 +122,7 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
         ax.set_title(xlabel, lg)
         if uni_scale:
             ax.set_xlim(0, 1)
+            ax.set_xticks([0, 0.5, 1])
             ax.set_ylim(0, 1)
             ax.set_aspect(1)
             ax.tick_params(labelsize=18)
@@ -145,10 +152,62 @@ def target_layers_in_out(cnn_name: str, target_type: Type[torch.nn.Module], uni_
             plt.figure(figsize=(8 ,4))
             plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95, bottom=0.1, top=0.9)  # 调整子图间距&去除空白区域
 
+def target_layers_in_out_all(cnn_name: str, target_type: Type[torch.nn.Module], uni_scale: bool, show_seq: bool,
+                  r_layers: List[Node], lfcnz: List[List[List[float]]], fit: str = None):
+    """对于特定类型的所有层，显示输入和输出的关联。一个窗口展示3*5=15个层的数据
+    target_type为要查看的layer类型
+    uni_scale为是否把刻度统一到[0, 1]区间
+    show_seq为是否用点的颜色表示帧的顺序
+    fit为使用什么拟合，''不拟合，'predictor'使用Trainer的Predictor拟合，'fit3'使用三次函数拟合
+    """
+    SUB_NROW, SUB_NCOL = 1, 2
+    if fit == 'predictor':
+        print("training predictor...", file=sys.stderr)
+        predictors = Trainer.train_predictors(dag_dnn, [fcnz[:NFRAME_SHOW] for fcnz in g_lfcnz])
+    else:
+        predictors = None
+    lfnz = lfcnz2lfnz(lfcnz)
+    nframe = len(lfnz[0])
+    cnt = 1
+    print(f"plotting {fit}...", file=sys.stderr)
+    for l in range(1, len(r_layers)):
+        xlabel = f"{l}-th Layer"
+        ax = plt.subplot(SUB_NROW, SUB_NCOL, cnt)
+        ax.set_title(xlabel, lg)
+        if uni_scale:
+            ax.set_xlim(0, 1)
+            ax.set_xticks([0, 0.5, 1])
+            ax.set_ylim(0, 1)
+            ax.set_aspect(1)
+            ax.tick_params(labelsize=18)
+        i_fnz = lfnz[l-1][1:]
+        o_fnz = lfnz[l][1:]
+        if show_seq:
+            plt.scatter(i_fnz, o_fnz, s=2,
+                        c=[i / nframe for i in range(nframe-1)],
+                        marker='.', cmap='viridis')
+        else:
+            plt.scatter(i_fnz, o_fnz, s=2, c='lightblue')
+        if predictors is not None:
+            draw_predictor(predictors[l], i_fnz, o_fnz, ax)
+        if fit == 'fit3':
+            draw_fit3(i_fnz, o_fnz, ax)
+        elif fit == 'mlp':
+            draw_mlp(i_fnz, o_fnz, ax)
+        elif fit == 'lgi':
+            draw_logistic(i_fnz, o_fnz, ax)
+        elif fit == '':
+            pass
+        cnt += 1
+        # plt.legend(loc='upper left')
+        if cnt > SUB_NROW*SUB_NCOL:
+            cnt = 1
+            plt.figure(figsize=(8 ,4))
+            plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95, bottom=0.1, top=0.9)  # 调整子图间距&去除空白区域
 
 # 控制图片大小的方法：手动调整窗口大小，达到和论文图的相同大小即可
 if __name__ == '__main__':
-    CNN_NAME = 'ResNet'  #AlexNet, VGG, GoogLeNet, ResNet
+    CNN_NAME = 'AlexNet'  #AlexNet, VGG, GoogLeNet, ResNet
     VIDEO_NAME = 'parking'  # road, campus, parking
     RESOLUTION = '480x720'  # 数据集的分辨率
     NFRAME_TOTAL = 400  # 数据集中的帧数
@@ -159,7 +218,7 @@ if __name__ == '__main__':
     SEQ_FRAME = False  # 是否用点的颜色表示帧的顺序
 
     # 拟合方法：predictor，fit3，mlp，lgi。''表示不拟合
-    FITS = ['lgi']  # 用哪些方式对NFRAME_SHOW进行拟合（训练集也是NFRAME_SHOW）
+    FITS = ['fit3']  # 用哪些方式对NFRAME_SHOW进行拟合（训练集也是NFRAME_SHOW）
 
     cnn_loaders = {'AlexNet': prepare_alexnet,
                    'VGG': prepare_vgg16,
@@ -176,6 +235,8 @@ if __name__ == '__main__':
         fig = plt.figure(figsize=(8 ,4)) # figsize=(8 ,4)
         plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95, bottom=0.1, top=0.9)  # 调整子图间距&去除空白区域
         #fig.suptitle(g_fit)
-        target_layers_in_out(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
+        target_layers_in_out_relu(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
                              g_r_layers, g_lfcnz, g_fit)
+        # target_layers_in_out_all(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
+        #                      g_r_layers, g_lfcnz, g_fit)
     plt.show()
