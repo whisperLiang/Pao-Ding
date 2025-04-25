@@ -117,7 +117,8 @@ def target_layers_in_out_relu(cnn_name: str, target_type: Type[torch.nn.Module],
         layer = r_layers[l].module
         if not isinstance(layer, target_type):
             continue
-        xlabel = f"{l}-th Relu Layer"
+        layer_type = type(layer).__name__  # 获取层的类型名称
+        xlabel = f"{l}-th Layer ({layer_type})"  # 添加层类型到xlabel
         ax = plt.subplot(SUB_NROW, SUB_NCOL, cnt)
         ax.set_title(xlabel, lg)
         if uni_scale:
@@ -171,7 +172,9 @@ def target_layers_in_out_all(cnn_name: str, target_type: Type[torch.nn.Module], 
     cnt = 1
     print(f"plotting {fit}...", file=sys.stderr)
     for l in range(1, len(r_layers)):
-        xlabel = f"{l}-th Layer"
+        layer = r_layers[l].module
+        layer_type = type(layer).__name__  # 获取层的类型名称
+        xlabel = f"{l}-th Layer ({layer_type})"  # 添加层类型到xlabel
         ax = plt.subplot(SUB_NROW, SUB_NCOL, cnt)
         ax.set_title(xlabel, lg)
         if uni_scale:
