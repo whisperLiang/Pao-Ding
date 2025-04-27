@@ -82,25 +82,33 @@ def plot_results(layer_indices, original_volumes, compressed_volumes, title):
     total_reduction = np.sum(volume_reduction)  # 总体积减少量
 
     # 绘制图像
-    plt.figure(figsize=(10, 6))
-    plt.plot(layer_indices, original_volumes, 'b--', label='No Sparse Encoding')
-    plt.plot(layer_indices, compressed_volumes, 'green', label='Using Sparse Encoding')
-    plt.fill_between(layer_indices, compressed_volumes, original_volumes, color='green', alpha=0.1, label='Volume Reduction')
+    plt.figure(figsize=(16, 10))  # 调整图像大小
+    plt.plot(layer_indices, original_volumes, 'b--', label='No Sparse Encoding', linewidth=3)
+    plt.plot(layer_indices, compressed_volumes, 'green', label='Using Sparse Encoding', linewidth=3)
+    plt.fill_between(layer_indices, compressed_volumes, original_volumes, color='green', alpha=0.2, label='Volume Reduction')
 
     # 在图像中显示总减少量
-    plt.text(0.5, 0.91, f'Total Reduction: {total_reduction:.2f} MB', transform=plt.gca().transAxes, fontsize=12, color='red')
+    plt.text(0.45, 0.58, f'Total Reduction: {total_reduction:.2f} MB', transform=plt.gca().transAxes, fontsize=40, color='red')
 
-    plt.title(title)
-    plt.xlabel('Index of CNN Layer')
-    plt.ylabel('Data Volume (MB)')
-    plt.legend()
+    # 设置标题和轴标签字体大小
+    plt.title(f'Data Volume of {CNN_NAME}', fontsize=44)
+    plt.xlabel('Index of CNN Layer', fontsize=40)
+    plt.ylabel('Data Volume (MB)', fontsize=40)
+
+    # 设置刻度字体大小
+    plt.xticks(fontsize=38)
+    plt.yticks(fontsize=38)
+
+    # 设置图例字体大小和位置
+    plt.legend(fontsize=38, loc='upper right')
+
     plt.tight_layout()
-    plt.savefig('optimized_data_volume_combined.png')
+    plt.savefig(f'{CNN_NAME}_data_volume.png')
     plt.show()
 
 if __name__ == '__main__':
     # 加载数据
-    CNN_NAME = 'AlexNet'  # 可选：AlexNet, VGG
+    CNN_NAME = 'VGG'  # 可选：AlexNet, VGG
     VIDEO_NAME = 'parking'
     RESOLUTION = '480x720'
     NFRAME_TOTAL = 400
@@ -120,4 +128,4 @@ if __name__ == '__main__':
 
     # 绘制图像
     layer_indices = np.arange(len(original_volumes))
-    plot_results(layer_indices, original_volumes, compressed_volumes, f'Data Volume of {CNN_NAME}')
+    plot_results(layer_indices, original_volumes, compressed_volumes, CNN_NAME)
