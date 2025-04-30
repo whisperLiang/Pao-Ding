@@ -591,7 +591,7 @@ def forward_ll(dpg, x, ignored_blocks=[]):
     return x, layer_topo
 
 # 3. draw computational graph
-def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(16, 16), dpi=300, cmap=None):
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), cmap=None, title_fontsize=50, label_fontsize=50, tick_fontsize=42):
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -605,15 +605,18 @@ def draw_computational_graph(layertopo, save_as, title='Computational Graph', fi
             if out_node in node2idx:
                 G[node2idx[out_node], node2idx[node]] = fill_value
                 G[node2idx[node], node2idx[out_node]] = fill_value
-        # pruner = dpg.get_pruner_of_module(module)
     fig, ax = plt.subplots(figsize=(figsize))
-    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
-    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
-    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
+    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Greens'))
+    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, linewidth=0.1)
+    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, linewidth=0.1)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=title_fontsize)
+    plt.xlabel('Layer Index', fontsize=label_fontsize)
+    plt.ylabel('Layer Index', fontsize=label_fontsize)
+    plt.xticks(fontsize=tick_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
     fig.tight_layout()
-    plt.savefig(save_as, dpi=dpi)
+    plt.savefig(save_as)
     return fig, ax
 
 # 4. topo sort the graph
