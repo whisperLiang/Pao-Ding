@@ -80,6 +80,7 @@ def plot_results(layer_indices, original_volumes, compressed_volumes, title):
     # 计算体积减少量
     volume_reduction = original_volumes - compressed_volumes
     total_reduction = np.sum(volume_reduction)  # 总体积减少量
+    total_reduction_rate = total_reduction / np.sum(original_volumes) *100 # 总体积减少率
 
     # 绘制图像
     plt.figure(figsize=(16, 10))  # 调整图像大小
@@ -88,7 +89,7 @@ def plot_results(layer_indices, original_volumes, compressed_volumes, title):
     plt.fill_between(layer_indices, compressed_volumes, original_volumes, color='green', alpha=0.2, label='Volume Reduction')
 
     # 在图像中显示总减少量
-    plt.text(0.45, 0.58, f'Total Reduction: {total_reduction:.2f} MB', transform=plt.gca().transAxes, fontsize=40, color='red')
+    plt.text(0.3, 0.58, f'Total Reduction:{total_reduction:.2f}MB, {total_reduction_rate:.2f}%', transform=plt.gca().transAxes, fontsize=40, color='red')
 
     # 设置标题和轴标签字体大小
     plt.title(f'Data Volume of {CNN_NAME}', fontsize=44)
@@ -108,7 +109,7 @@ def plot_results(layer_indices, original_volumes, compressed_volumes, title):
 
 if __name__ == '__main__':
     # 加载数据
-    CNN_NAME = 'VGG'  # 可选：AlexNet, VGG
+    CNN_NAME = 'AlexNet'  # 可选：AlexNet, VGG
     VIDEO_NAME = 'parking'
     RESOLUTION = '480x720'
     NFRAME_TOTAL = 400
