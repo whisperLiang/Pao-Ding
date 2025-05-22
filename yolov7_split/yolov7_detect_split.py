@@ -36,7 +36,6 @@ def detect(save_img=False):
 
     ####################################################################################
     import model_split as ms
-    from model_split import draw_computational_graph
 
     # for p in model.parameters():
     #     p.requires_grad_(True)
@@ -68,7 +67,7 @@ def detect(save_img=False):
     if torch.allclose(out_before[0], out_after[0]):
         print(f"model splits success!")
         model_name = 'yolov7'
-        fig, ax = draw_computational_graph(layer_topo, save_as=f'./computational_graph/{model_name}_computational_graph.png', 
+        fig, ax = ms.draw_computational_graph(layer_topo, save_as=f'./computational_graph/{model_name}_computational_graph.png', 
                                                title=f'Dependency graph of {model_name}', figsize=(16, 16), cmap=None)
 
     ####################################################################################

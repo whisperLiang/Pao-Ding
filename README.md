@@ -1,5 +1,9 @@
 # Pao-Ding
 Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning.
+
+This code is open for Automatic CNN Parsing module of Pao-Ding.
+
+We will make all of our code publicly available to the community after publication.
 ## Getting Started
 My python version: python3.10.12.
 Install enviroment package.
