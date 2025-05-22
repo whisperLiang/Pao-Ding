@@ -23,6 +23,7 @@ class Node(object):
         self.module_class = module.__class__ # class type of the module
         self.indegree = 0 # indegree of the node to judge whether its inputs are all ready
         self.outdegree = 0 # outdegree of the node to judge whether it is necessary to save the result
+        self.fixedoutd = 0 # fixed outdegree of the node     
         self.inshape = inshape # input shape
         self.outshape = outshape # output shape
         self.outresult = None # output result
@@ -173,6 +174,7 @@ class DependencyGraph(object):
 
         self.verbose = verbose
         self.model = model
+        self.example_inputs = example_inputs
 
         self.IGNORED_LAYERS += IGNORED_LAYERS if IGNORED_LAYERS is not None else self.IGNORED_LAYERS
         for m in self.IGNORED_LAYERS:
@@ -401,6 +403,7 @@ class DependencyGraph(object):
                             nodelist[0].inshape = input_nodelist[-1].outshape
                         nodelist[0].indegree += 1
                         input_nodelist[-1].outdegree += 1
+                        input_nodelist[-1].fixedoutd += 1
                         input_nodelist[-1].add_output(nodelist)
                         if input_nodelist[-1].outshape is None:
                             input_nodelist[-1].outshape = nodelist[0].inshape
@@ -495,15 +498,17 @@ def forward_ll(dpg, x, ignored_blocks=[]):
         node = queue.pop()
 
         # Step 4: Update the in-degree of neighbors and enqueue if in-degree becomes 0
-        for o_nodelist in node.outputs:
+        for index, o_nodelist in enumerate(node.outputs):
             if len(o_nodelist) > 1:
                 for ind in range(len(o_nodelist)-1):
                     if [o_nodelist[ind+1]] not in o_nodelist[ind].outputs:
                         o_nodelist[ind].outputs.append([o_nodelist[ind+1]])
                         o_nodelist[ind].outdegree += 1
+                        o_nodelist[ind].fixedoutd += 1
                     if [o_nodelist[ind]] not in o_nodelist[ind+1].inputs:
                         o_nodelist[ind+1].inputs.append([o_nodelist[ind]])
                         o_nodelist[ind+1].indegree += 1
+                node.outputs[index] = [o_nodelist[0]] # 更新输出节点列表
 
             for o_node in o_nodelist:
                 if o_node.name in ignored_blocks_node_list:
@@ -542,12 +547,15 @@ def forward_ll(dpg, x, ignored_blocks=[]):
         
         # 将输入按序传入到节点中
         x_ = []
-        for i_nodelist in node.inputs:
+        for index, i_nodelist in enumerate(node.inputs):
             if i_nodelist[-1].outdegree > 0:
                 if i_nodelist[-1].outresult is not None:
                     x_.append(i_nodelist[-1].outresult)
             else:
                 x_.append(x)
+            # 更新输入节点列表
+            if len(i_nodelist) > 1:
+                node.inputs[index] = [i_nodelist[-1]]
         x = node.forward(x_ if len(x_) > 1 else x)
 
         if isinstance(x, tuple) and isinstance(x[0], torchvision.models.detection.image_list.ImageList):
@@ -582,8 +590,40 @@ def forward_ll(dpg, x, ignored_blocks=[]):
 
     return x, layer_topo
 
-# 3. draw computational graph
-def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(16, 16), dpi=300, cmap=None):
+# 3. use topolayer to forward the model
+def topolayer_forward(layertopo, x):
+    """
+    Forward input x through the layers in layertopo sequentially.
+    Args:
+        layertopo (list): List of Node objects in topological order.
+        x (torch.Tensor or list): Input tensor(s) to the first node.
+    Returns:
+        torch.Tensor: Output after passing through all layers.
+    """
+    for idx, node in enumerate(layertopo):
+        # Prepare input for the node
+        if idx == 0:
+            input_x = x
+        else:
+            # Gather outputs from input nodes if needed
+            input_x = []
+            for i_nodelist in node.inputs:
+                if isinstance(i_nodelist, list):
+                    input_x.append(i_nodelist[-1].outresult)
+                else:
+                    input_x.append(i_nodelist.outresult)
+            input_x = input_x if len(input_x) > 1 else input_x[0]
+
+        # Forward through the node
+        out = node.forward(input_x)
+        node.outresult = out  # Save output for possible downstream use
+
+    # Return the output of the last node
+    return layertopo[-1].outresult
+
+
+# 4. draw computational graph
+def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), cmap=None, title_fontsize=50, label_fontsize=50, tick_fontsize=42):
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -597,18 +637,21 @@ def draw_computational_graph(layertopo, save_as, title='Computational Graph', fi
             if out_node in node2idx:
                 G[node2idx[out_node], node2idx[node]] = fill_value
                 G[node2idx[node], node2idx[out_node]] = fill_value
-        # pruner = dpg.get_pruner_of_module(module)
     fig, ax = plt.subplots(figsize=(figsize))
-    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
-    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
-    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
+    ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Greens'))
+    plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, linewidth=0.1)
+    plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, linewidth=0.1)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=title_fontsize)
+    plt.xlabel('Layer Index', fontsize=label_fontsize)
+    plt.ylabel('Layer Index', fontsize=label_fontsize)
+    plt.xticks(fontsize=tick_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
     fig.tight_layout()
-    plt.savefig(save_as, dpi=dpi)
+    plt.savefig(save_as)
     return fig, ax
 
-# 4. topo sort the graph
+# 5. topo sort the graph
 def topo_sorting(dpg, ignored_layers=[]):
 
     if len(ignored_layers) > 0:

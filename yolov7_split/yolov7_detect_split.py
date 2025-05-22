@@ -36,6 +36,7 @@ def detect(save_img=False):
 
     ####################################################################################
     import model_split as ms
+    from model_split import draw_computational_graph
 
     # for p in model.parameters():
     #     p.requires_grad_(True)
@@ -46,9 +47,9 @@ def detect(save_img=False):
 
     # You should choose the ignored blocks according to your model
     # for yolov7
-    # ignored_blocks.append(model.model._modules['105'])
+    ignored_blocks.append(model.model._modules['105'])
     # for yolov7x
-    ignored_blocks.append(model.model._modules['121'])
+    # ignored_blocks.append(model.model._modules['121'])
 
     # print(f'ignored_layers is {ignored_blocks}')
 
@@ -66,6 +67,9 @@ def detect(save_img=False):
     out_before = model(example_inputs)
     if torch.allclose(out_before[0], out_after[0]):
         print(f"model splits success!")
+        model_name = 'yolov7'
+        fig, ax = draw_computational_graph(layer_topo, save_as=f'./computational_graph/{model_name}_computational_graph.png', 
+                                               title=f'Dependency graph of {model_name}', figsize=(16, 16), cmap=None)
 
     ####################################################################################
 
