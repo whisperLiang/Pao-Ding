@@ -20,6 +20,7 @@ Make sure that you can run detect.py correctly.
 python3 detect.py
 ```
 Merge all files and folders from Pao-Ding to yolov5.
+
 Move detect_after_split.py from yolov5_split to yolov5, and then run it.
 ```bash
 python3 detect_after_split.py
@@ -34,6 +35,7 @@ Make sure that you can run detect.py correctly.
 python3 detect.py
 ```
 Merge all files and folders from Pao-Ding to yolov7.
+
 Move yolov7_detect_split.py from yolov7_split to yolov7, and then run it.
 ```bash
 python3 yolov7_detect_split.py
