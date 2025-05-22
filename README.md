@@ -6,7 +6,7 @@ This code is open for Automatic CNN Parsing module of Pao-Ding.
 We will make all of our code publicly available to the community after publication.
 ## Getting Started
 My python version: python3.10.12.
-Install enviroment package.
+Install environment package.
 ```bash
 pip3 install -r requirements.txt
 ```
