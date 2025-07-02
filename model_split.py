@@ -590,7 +590,39 @@ def forward_ll(dpg, x, ignored_blocks=[]):
 
     return x, layer_topo
 
-# 3. draw computational graph
+# 3. use topolayer to forward the model
+def topolayer_forward(layertopo, x):
+    """
+    Forward input x through the layers in layertopo sequentially.
+    Args:
+        layertopo (list): List of Node objects in topological order.
+        x (torch.Tensor or list): Input tensor(s) to the first node.
+    Returns:
+        torch.Tensor: Output after passing through all layers.
+    """
+    for idx, node in enumerate(layertopo):
+        # Prepare input for the node
+        if idx == 0:
+            input_x = x
+        else:
+            # Gather outputs from input nodes if needed
+            input_x = []
+            for i_nodelist in node.inputs:
+                if isinstance(i_nodelist, list):
+                    input_x.append(i_nodelist[-1].outresult)
+                else:
+                    input_x.append(i_nodelist.outresult)
+            input_x = input_x if len(input_x) > 1 else input_x[0]
+
+        # Forward through the node
+        out = node.forward(input_x)
+        node.outresult = out  # Save output for possible downstream use
+
+    # Return the output of the last node
+    return layertopo[-1].outresult
+
+
+# 4. draw computational graph
 def draw_computational_graph(layertopo, save_as, title='Computational Graph', figsize=(8, 8), cmap=None, title_fontsize=50, label_fontsize=50, tick_fontsize=42):
     import numpy as np
     import matplotlib.pyplot as plt
@@ -619,7 +651,7 @@ def draw_computational_graph(layertopo, save_as, title='Computational Graph', fi
     plt.savefig(save_as)
     return fig, ax
 
-# 4. topo sort the graph
+# 5. topo sort the graph
 def topo_sorting(dpg, ignored_layers=[]):
 
     if len(ignored_layers) > 0:

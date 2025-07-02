@@ -1,76 +1,75 @@
 # Pao-Ding
-Pao-Ding: Automatic DNN Parsing and Decomposition for Collaborative Inference
+Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning
 
-## 环境配置
+## Environment Configuration
 
-Python版本3.10.12。
+Python version 3.10.12.
 
-### Ubuntu&树莓派&Win
+### Ubuntu & Raspberry Pi & Win
 
-安装Python依赖包
+Install Python dependencies:
 ```bash
 pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-## 网络配置
+## Network Configuration
 
-### 拓扑结构
+### Topology Structure
 
-要确保如下的设备访问路径可行，即client可以通过特定的IP端口号访问到相应的server。
+Ensure the following device access paths are feasible, i.e., the client can access the corresponding server via a specific IP port.
 
-| 设备(client) | 要访问的设备(server) |
-| ------------ | -------------------- |
-| Master       | 所有Worker，Trainer  |
-| Worker i     | Worker i+1           |
+| Device (client) | Device to be accessed (server) |
+|-----------------|-------------------------------|
+| Master          | All Workers, Trainer          |
+| Worker i        | Worker i+1                    |
 
-虽然Worker也会作为client请求Master，但是系统内部通过grpc的流式回复实现了这一功能，所以无需配置。
+Although Worker also acts as a client requesting Master, this functionality is implemented internally by the system through gRPC streaming, so no additional configuration is required.
 
-## 实际网络环境
+## Real Network Environment
 
-### 运行
-具体运行方式可以参考[ResMap](https://github.com/nju-cn/ResMap)的README.md。
+### Operation
+For specific running methods, you can refer to the [ResMap](https://github.com/nju-cn/ResMap) README.md. The main focus should be on the startup order of nodes in the topology structure and modifications to the `config.yml` file.
 
-主要是需要关注拓扑结构中的节点的启动顺序以及config.yml文件处的修改。
+## Docker Simulation Environment
 
-## Docker仿真环境
+### Workflow
+To support an arbitrary number of workers and different network bandwidths, we have implemented a collaborative inference simulation environment based on Docker containers on a server with 32 CPU cores and 64GB of memory. We can use Docker Compose to configure the resources (CPU and memory) used by each worker container node and simulate the network environment between containers using Pumba.
 
-### 工作流
-为了支持任意数量的workers 和不同的网络带宽，我们在cpu核数为32，内存为64GB的服务器上基于Docker 容器实现了一套协同推理的仿真环境。
-我们可以用docker compose 实现对各个workers 容器节点使用的资源（CPU 和 memory）进行配置，并且可以借助Pumba 进行容器间网络环境的仿真。
-### 运行
-#### 自定义配置
-你可以参考docker-compose.yml文件，修改其中的配置，然后启动资源自定义的docker容器节点
+### Operation
+
+#### Custom Configuration
+You can refer to the `docker-compose.yml` file to modify the configuration and then start the Docker container nodes with customized resources:
 ```bash
 docker-compose up -d
 ```
-然后你可以通过各节点的健康检查来确认是否准备就绪，如果就绪，就可以通过Pumba进行网络带宽，延迟，丢包等设置。
+You can then confirm whether the nodes are ready through health checks. If ready, you can use Pumba to set network bandwidth, latency, packet loss, etc.
 ```bash
 pumba netem --duration 2m --tc-image gaiadocker/iproute2 rate --rate 32mbit re2:^pao-ding
 ```
-我们通过上述脚本将以pao-ding开头的容器节点的带宽设置为32Mbps，持续时间为2min。
-然后我们进入到master-trainer节点，启动master进行最终的调度进行流水线推理即可。
+The above script sets the bandwidth of container nodes starting with `pao-ding` to 32Mbps for a duration of 2 minutes. Then, you can enter the master-trainer node to start the master for final scheduling and pipeline inference:
 ```bash
 docker exec -it pao-ding_paoding-master-trainer_1 /bin/bash
 python3 main.py master
 ```
-如果推理完成，你可以通过docker-compose down 停止容器。
-#### 自动生成配置
-你可以通过gen_compose_net.py 脚本自动生成temp_docker-compose.yml文件和net.yml。
+If the inference is completed, you can stop the containers using `docker-compose down`.
+
+#### Auto-generated Configuration
+You can use the `gen_compose_net.py` script to automatically generate the `temp_docker-compose.yml` and `net.yml` files:
 ```bash
-python3 gen_compose_net.py <workers_num>  
+python3 gen_compose_net.py <workers_num>
 ```
-生成之后你需要将net.yml文件中字段复制到config.yml文件中对应的字段中，同时记得修改workers_num字段。
-最后你可以通过docker-compose -f temp_docker-compose.yml up -d启动自定义数量的容器节点。
-其余操作你可以参考自定义配置的操作。
-需要注意的是，如果容器节点启动失败，你需要自己手动修改temp_docker-compose.yml文件中的资源配置。
+After generation, you need to copy the fields from the `net.yml` file to the corresponding fields in the `config.yml` file and remember to modify the `workers_num` field. Finally, you can start the container nodes with a custom number using:
+```bash
+docker-compose -f temp_docker-compose.yml up -d
+```
+For the remaining operations, you can refer to the custom configuration steps. Note that if container nodes fail to start, you may need to manually modify the resource allocation in the `temp_docker-compose.yml` file.
 
 ## Citation
 
-本项目主要参考了以下三个项目:
+This project mainly references the following three projects:
 
 [ResMap](https://github.com/nju-cn/ResMap)
 
 [Torch-Pruning](https://github.com/VainF/Torch-Pruning)
 
 [Pumba](https://github.com/alexei-led/pumba)
-

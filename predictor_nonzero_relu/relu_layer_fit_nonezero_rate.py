@@ -94,6 +94,14 @@ def draw_logistic(i_fnz: List[float], o_fnz: List[float], ax: Axes):
 
 lg = {'size': 20}
 
+def ordinal(n):
+    """返回带英文序数后缀的数字字符串"""
+    if 10 <= n % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+    return f"{n}{suffix}"
+
 def target_layers_in_out_relu(cnn_name: str, target_type: Type[torch.nn.Module], uni_scale: bool, show_seq: bool,
                   r_layers: List[Node], lfcnz: List[List[List[float]]], fit: str = None):
     """对于特定类型的所有层，显示输入和输出的关联。一个窗口展示3*5=15个层的数据
@@ -118,7 +126,7 @@ def target_layers_in_out_relu(cnn_name: str, target_type: Type[torch.nn.Module],
         if not isinstance(layer, target_type):
             continue
         layer_type = type(layer).__name__  # 获取层的类型名称
-        xlabel = f"{l}-th Layer ({layer_type})"  # 添加层类型到xlabel
+        xlabel = f"{ordinal(l)} Layer ({layer_type})"  # 添加层类型到xlabel
         ax = plt.subplot(SUB_NROW, SUB_NCOL, cnt)
         ax.set_title(xlabel, lg)
         if uni_scale:
@@ -174,7 +182,7 @@ def target_layers_in_out_all(cnn_name: str, target_type: Type[torch.nn.Module], 
     for l in range(1, len(r_layers)):
         layer = r_layers[l].module
         layer_type = type(layer).__name__  # 获取层的类型名称
-        xlabel = f"{l}-th Layer ({layer_type})"  # 添加层类型到xlabel
+        xlabel = f"{ordinal(l)} Layer ({layer_type})"  # 添加层类型到xlabel
         ax = plt.subplot(SUB_NROW, SUB_NCOL, cnt)
         ax.set_title(xlabel, lg)
         if uni_scale:
@@ -238,8 +246,8 @@ if __name__ == '__main__':
         fig = plt.figure(figsize=(8 ,4)) # figsize=(8 ,4)
         plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95, bottom=0.1, top=0.9)  # 调整子图间距&去除空白区域
         #fig.suptitle(g_fit)
-        target_layers_in_out_relu(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
-                             g_r_layers, g_lfcnz, g_fit)
-        # target_layers_in_out_all(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
+        # target_layers_in_out_relu(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
         #                      g_r_layers, g_lfcnz, g_fit)
+        target_layers_in_out_all(CNN_NAME, target_types[TARGET_TYPE], UNI_SCALE, SEQ_FRAME,
+                             g_r_layers, g_lfcnz, g_fit)
     plt.show()
