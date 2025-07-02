@@ -60,12 +60,11 @@ services:
       retries: 100
 
   paoding-worker0:
-    <<: *paoding-common
+    <<: [*paoding-common, *resources-common]
     command: python3 main.py worker -i 0
     networks:
       paoding-network:
         ipv4_address: 174.28.0.3
-    <<: *resources-common
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 3s
@@ -73,12 +72,11 @@ services:
       retries: 20
 
   paoding-worker1:
-    <<: *paoding-common
+    <<: [*paoding-common, *resources-common]
     command: python3 main.py worker -i 1
     networks:
       paoding-network:
         ipv4_address: 174.28.0.4
-    <<: *resources-common
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 3s
