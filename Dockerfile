@@ -1,7 +1,7 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-bullseye
 
-# 更新包列表并安装OpenGL库
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libegl1-mesa-dev \
@@ -16,7 +16,7 @@ WORKDIR /Pao-Ding
 COPY ./  /Pao-Ding
 
 # Install any needed packages specified in requirements.txt
-RUN pip install torch torchvision -f https://download.pytorch.org/whl/cpu/torch_stable.html
+RUN pip install torch torchvision -f https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install -r ./requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Run when the container launches

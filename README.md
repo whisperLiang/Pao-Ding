@@ -40,7 +40,8 @@ To support an arbitrary number of workers and different network bandwidths, we h
 #### Custom Configuration
 You can refer to the `docker-compose.yml` file to modify the configuration and then start the Docker container nodes with customized resources:
 ```bash
-docker-compose up -d
+docker build -t pao-ding .
+docker compose up -d
 ```
 You can then confirm whether the nodes are ready through health checks. If ready, you can use Pumba to set network bandwidth, latency, packet loss, etc.
 ```bash

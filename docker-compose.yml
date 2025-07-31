@@ -1,6 +1,6 @@
 # Settings and configurations that are common for all containers
 x-paoding-common: &paoding-common
-  image: pao-ding:1.0
+  image: pao-ding:latest
   volumes:
     - /home/yons/.cache/torch/hub/checkpoints:/root/.cache/torch/hub/checkpoints/
     - /home/yons/whisperliang/Pao-Ding:/Pao-Ding
