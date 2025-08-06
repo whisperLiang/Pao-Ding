@@ -15,8 +15,8 @@ best_split_points = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 40, 40, 17,
 fig, ax1 = plt.subplots()
 
 # 绘制 w0 和 w1 的带宽折线图，并添加点标记
-ax1.plot(ifr_queue, w0_bandwidths, color='lightblue', marker='x', label='w0 bandwidth')  # 浅绿色
-ax1.plot(ifr_queue, w1_bandwidths, color='gray', marker='x', label='w1 bandwidth')  # 浅蓝色
+ax1.plot(ifr_queue, w0_bandwidths, color='lightblue', marker='x', label=r'm$\rightarrow$w0 bandwidth')  # 浅绿色
+ax1.plot(ifr_queue, w1_bandwidths, color='gray', marker='x', label=r'w0$\rightarrow$w1 bandwidth')  # 浅蓝色
 
 # 设置第一个 y 轴
 ax1.set_xlabel('IFR Queue Index', fontsize=14)
