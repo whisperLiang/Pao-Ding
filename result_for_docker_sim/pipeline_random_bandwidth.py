@@ -9,7 +9,7 @@ w1_bandwidths = [2.23, 2.17, 1.76, 1.91, 1.73, 2.23, 1.89, 1.79, 1.72, 2.21, 1.9
 w0_bandwidths = [x * 8 for x in w0_bandwidths]
 w1_bandwidths = [x * 8 for x in w1_bandwidths]
 
-best_split_points = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 40, 40, 17, 17, 17, 17, 17, 17]
+best_split_points = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 40, 40, 17, 17, 17, 17, 17, 17]
 
 # 创建图表
 fig, ax1 = plt.subplots()
