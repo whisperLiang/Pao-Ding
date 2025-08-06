@@ -49,7 +49,7 @@ pumba netem --duration 2m --tc-image gaiadocker/iproute2 rate --rate 32mbit re2:
 ```
 The above script sets the bandwidth of container nodes starting with `pao-ding` to 32Mbps for a duration of 2 minutes. Then, you can enter the master-trainer node to start the master for final scheduling and pipeline inference:
 ```bash
-docker exec -it pao-ding_paoding-master-trainer_1 /bin/bash
+docker exec -it pao-ding-paoding-master-trainer-1 /bin/bash
 python3 main.py master
 ```
 If the inference is completed, you can stop the containers using `docker-compose down`.

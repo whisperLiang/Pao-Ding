@@ -1,7 +1,7 @@
 # Configuration file path of logging
 log_cfg: logging.yml
 
-workers_num: 8
+workers_num: 2
 # Local ports listened by each service
 port:
   master: 11111
@@ -21,19 +21,19 @@ net:
   m->t: 174.28.0.2:11112
   m->w0: 174.28.0.3:11113
   m->w1: 174.28.0.4:11113
-  m->w2: 174.28.0.5:11113
-  m->w3: 174.28.0.6:11113
-  m->w4: 174.28.0.7:11113
-  m->w5: 174.28.0.8:11113
-  m->w6: 174.28.0.9:11113
-  m->w7: 174.28.0.10:11113
+  # m->w2: 174.28.0.5:11113
+  # m->w3: 174.28.0.6:11113
+  # m->w4: 174.28.0.7:11113
+  # m->w5: 174.28.0.8:11113
+  # m->w6: 174.28.0.9:11113
+  # m->w7: 174.28.0.10:11113
   w0->w1: 174.28.0.4:11113
-  w1->w2: 174.28.0.5:11113
-  w2->w3: 174.28.0.6:11113
-  w3->w4: 174.28.0.7:11113
-  w4->w5: 174.28.0.8:11113
-  w5->w6: 174.28.0.9:11113
-  w6->w7: 174.28.0.10:11113
+  # w1->w2: 174.28.0.5:11113
+  # w2->w3: 174.28.0.6:11113
+  # w3->w4: 174.28.0.7:11113
+  # w4->w5: 174.28.0.8:11113
+  # w5->w6: 174.28.0.9:11113
+  # w6->w7: 174.28.0.10:11113
 
 # DNN load function, use this to choose dnn
 # dnn_loader: !!python/name:dnn_models.any_dnn_split.prepare_alexnet
@@ -55,7 +55,7 @@ check: !!bool false
 
 # Configuration of master
 master:
-  ifr_num: 11  # Total frame to be processed
+  ifr_num: 30  # Total frame to be processed
   pd_num: 0  # How many frames are pending at the same time, 0 means unlimited
   itv_time: 0  # How long to wait after issuing an IFR, for debugging only. Normally it should be 0
   # len(bandwidth) must be equal to len(worker).
@@ -63,18 +63,18 @@ master:
   bandwidth:
   - 10
   - 10
-  - 10
-  - 10
-  - 10
-  - 10
-  - 10
-  - 10
+  # - 10
+  # - 10
+  # - 10
+  # - 10
+  # - 10
+  # - 10
   # bandwidth: [3, 3, 3]
   scheduler: !!python/name:schedulers.my_scheduler.MyScheduler
   # scheduler: !!python/name:schedulers.lb_scheduler.LBScheduler
   LBScheduler:
   MyScheduler:
-    gp_size: 10  # The number of frames a group contains. A group of frames will use the same scheduling policy
+    gp_size: 3  # The number of frames a group contains. A group of frames will use the same scheduling policy
     # gp_size: 3 # for real local network, it should be 3; for docker network, it should be 10
   OSCScheduler:
     side: edge  # edge/cloud

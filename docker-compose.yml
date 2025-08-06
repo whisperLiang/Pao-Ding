@@ -2,15 +2,15 @@
 x-paoding-common: &paoding-common
   image: pao-ding:latest
   volumes:
-    - /home/yons/.cache/torch/hub/checkpoints:/root/.cache/torch/hub/checkpoints/
-    - /home/yons/whisperliang/Pao-Ding:/Pao-Ding
+    - /home/whisperliang/.cache/torch/hub/checkpoints:/root/.cache/torch/hub/checkpoints/
+    - /home/whisperliang/Pao-Ding:/Pao-Ding
 
 x-resources-common: &resources-common
   deploy:
     resources:
       limits:
         cpus: "0.5"
-        memory: 512M
+        memory: 1.5G
   
 services:
   # # you can make the workfolw automatic by this script
