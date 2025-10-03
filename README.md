@@ -1,6 +1,10 @@
 # Pao-Ding
 Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning
 
+The branch 'model_split' is the Automatic CNN Parsing module of Pao-Ding. You can apply it into other collaborative computing scenarios.
+
+The branch 'paoding' is the all modules of Pao-Ding. You can run it for some experimental results.
+
 ## Environment Configuration
 
 Python version 3.10.12.
