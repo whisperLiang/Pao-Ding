@@ -1,5 +1,13 @@
-# Pao-Ding
-Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning
+# Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning
+This repository is the official implementation of [Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning (TMC 2025)](https://ieeexplore.ieee.org/abstract/document/11195759). 
+
+
+<div align="center">
+  <img src="Pao-Ding-revised.png" alt="Sample Image" style="width: auto; height: auto;"/>
+</div>
+
+
+## Usage Introduction
 
 The branch 'model_split' is the Automatic CNN Parsing module of Pao-Ding. You can apply it into other collaborative computing scenarios.
 
@@ -8,8 +16,6 @@ The branch 'paoding' is the all modules of Pao-Ding. You can run it for some exp
 ## Environment Configuration
 
 Python version 3.10.12.
-
-### Ubuntu & Raspberry Pi & Win
 
 Install Python dependencies:
 ```bash
@@ -70,6 +76,19 @@ docker-compose -f temp_docker-compose.yml up -d
 For the remaining operations, you can refer to the custom configuration steps. Note that if container nodes fail to start, you may need to manually modify the resource allocation in the `temp_docker-compose.yml` file.
 
 ## Citation
+If you find the paper provides some insights or our code useful, please consider giving a star ⭐ and citing:
+```
+@ARTICLE{11195759,
+  author={Liang, Guanping and Han, Biao and Li, Ruidong and Han, Xueqiang and Sun, Zhigang},
+  journal={IEEE Transactions on Mobile Computing}, 
+  title={Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={1-15},
+  doi={10.1109/TMC.2025.3618296}}
+
+```
 
 This project mainly references the following three projects:
 
