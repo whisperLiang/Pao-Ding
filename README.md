@@ -82,11 +82,12 @@ If you find the paper provides some insights or our code useful, please consider
   author={Liang, Guanping and Han, Biao and Li, Ruidong and Han, Xueqiang and Sun, Zhigang},
   journal={IEEE Transactions on Mobile Computing}, 
   title={Pao-Ding: Accelerating Cross-Edge Video Analytics via Automated CNN Model Partitioning}, 
-  year={2025},
-  volume={},
-  number={},
-  pages={1-15},
+  year={2026},
+  volume={25},
+  number={3},
+  pages={3697-3711},
   doi={10.1109/TMC.2025.3618296}}
+
 
 ```
 
